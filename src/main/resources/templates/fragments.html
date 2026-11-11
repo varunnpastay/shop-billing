@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' | ' + ${shop.shopName}">Billing</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/logo.svg}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+
+<header th:fragment="nav" class="topbar" th:with="p=${currentPath ?: ''}">
+    <a class="brand" th:href="@{/}">
+        <img th:if="${hasLogo}" class="brand-logo" th:src="@{/shop-logo}" alt="">
+        <img th:unless="${hasLogo}" class="brand-logo svt" th:src="@{/img/logo.svg}" alt="">
+        <span th:text="${shop.shopName}">Shop</span>
+    </a>
+    <input type="checkbox" id="nav-toggle" class="nav-toggle">
+    <label for="nav-toggle" class="nav-burger" title="Menu" aria-label="Menu">&#9776;</label>
+    <nav>
+        <div class="nav-cta-group">
+            <a th:href="@{/local/new}" class="nav-cta">+ Local Bill</a>
+            <a th:href="@{/bills/new}" class="nav-cta alt">+ Wholesale Bill</a>
+        </div>
+
+        <a th:href="@{/}" th:classappend="${p == '/'} ? 'active'">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            Dashboard</a>
+
+        <div class="nav-section">Bills</div>
+        <a th:href="@{/local}" th:classappend="${p.startsWith('/local')} ? 'active'">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2h12v20l-3-2-3 2-3-2-3 2z"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>
+            Local Bills</a>
+        <a th:href="@{/bills}" th:classappend="${p.startsWith('/bills')} ? 'active'">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></svg>
+            Wholesale Bills</a>
+
+        <div class="nav-section">Records</div>
+        <a th:href="@{/customers}" th:classappend="${p.startsWith('/customers')} ? 'active'">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 4a4 4 0 0 1 0 8M22 21a7 7 0 0 0-4-6.3"/></svg>
+            Customers</a>
+        <a th:href="@{/products}" th:classappend="${p.startsWith('/products')} ? 'active'">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/></svg>
+            Items</a>
+        <a th:href="@{/reports}" th:classappend="${p.startsWith('/reports')} ? 'active'">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg>
+            Reports</a>
+        <a th:href="@{/settings}" th:classappend="${p.startsWith('/settings')} ? 'active'">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+            Settings</a>
+
+        <form th:action="@{/logout}" method="post" class="nav-form"><button type="submit">
+            <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+            Logout</button></form>
+    </nav>
+</header>
+
+<div th:fragment="flash">
+    <div class="alert warn-box" th:if="${mustChangePassword}">
+        You are using the default password. Please set a new password below before using the app.
+    </div>
+    <div class="alert ok" th:if="${msg}" th:text="${msg}"></div>
+    <div class="alert err" th:if="${err}" th:text="${err}"></div>
+</div>
+
+<span th:fragment="status(b)">
+    <span class="badge grey" th:if="${b.cancelled}">Cancelled</span>
+    <span class="badge green" th:if="${!b.cancelled and b.paid}">Paid</span>
+    <span class="badge red" th:if="${!b.cancelled and !b.paid}">Unpaid</span>
+</span>
+
+</body>
+</html>

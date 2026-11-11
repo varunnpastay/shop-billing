@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Settings')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container narrow">
+    <div th:replace="~{fragments :: flash}"></div>
+    <h1>Shop Settings</h1>
+    <form class="card" th:action="@{/settings}" th:object="${setting}" method="post">
+        <label>Shop Name * <input th:field="*{shopName}" required maxlength="120"></label>
+        <label>Address <textarea th:field="*{address}" rows="2" maxlength="250"></textarea></label>
+        <div class="grid-2">
+            <label>GSTIN <input th:field="*{gstin}" maxlength="15" placeholder="15 characters"></label>
+            <label>Mobile <input th:field="*{mobile}" maxlength="40"></label>
+            <label>Email <input type="email" th:field="*{email}" maxlength="120"></label>
+            <label>State <input th:field="*{stateName}" maxlength="60"></label>
+            <label>State Code <input th:field="*{stateCode}" maxlength="4"></label>
+            <label>Default GST % <input type="number" step="0.01" min="0" max="100" th:field="*{defaultGst}"></label>
+            <label>Next Bill No * <input type="number" min="1" th:field="*{nextBillNo}" required></label>
+        </div>
+        <h3 class="section-title">Wholesale Bill Header</h3>
+        <label>Shop Name in Kannada <input th:field="*{shopNameLocal}" maxlength="120"></label>
+        <div class="grid-2">
+            <label>Top line <input th:field="*{invoiceBlessing}" maxlength="120" placeholder="|| SHRI GAJANANA PRASANNA ||"></label>
+            <label>Jurisdiction <input th:field="*{jurisdiction}" maxlength="120"></label>
+            <label>Second Mobile <input th:field="*{mobile2}" maxlength="40"></label>
+        </div>
+        <label>Address on wholesale bill (2 lines) <textarea th:field="*{invoiceAddress}" rows="2" maxlength="500"></textarea></label>
+        <label>Bank Details (printed on bill) <textarea th:field="*{bankDetails}" rows="3" maxlength="1000"></textarea></label>
+        <label>Terms &amp; Conditions <textarea th:field="*{terms}" rows="3" maxlength="1000"></textarea></label>
+        <label class="check"><input type="checkbox" th:field="*{showLogo}"> Print logo on bills</label>
+
+        <h3 id="local" class="section-title">Local Bill (small receipt)</h3>
+        <div class="grid-2">
+            <label>Bill Title <input th:field="*{receiptTitle}" maxlength="60" placeholder="BILL OF SUPPLY"></label>
+            <label>Line under Shop Name <input th:field="*{receiptSubtitle}" maxlength="120"></label>
+            <label>UPI ID (for payment QR code) <input th:field="*{upiId}" maxlength="80" placeholder="name@bank"></label>
+            <label>Instagram ID <input th:field="*{instagram}" maxlength="80"></label>
+            <label>Next Local Bill No (this year) *
+                <input type="number" min="1" name="nextLocalBillNo" th:value="${nextLocalBillNo}" required></label>
+            <label>Footer <input th:field="*{receiptFooter}" maxlength="120"></label>
+        </div>
+        <label>Declaration <textarea th:field="*{receiptDeclaration}" rows="2" maxlength="500"></textarea></label>
+        <p class="muted small">Leave a field empty to hide it on the receipt. Local bills use the shop name, address,
+            mobile (as WhatsApp) and GSTIN from above.</p>
+        <button class="btn primary">Save Settings</button>
+    </form>
+
+    <h2 id="logo">Shop Logo</h2>
+    <div class="card logo-card">
+        <div class="logo-preview">
+            <img th:if="${hasLogo}" th:src="@{/shop-logo}" alt="Shop logo">
+            <img th:unless="${hasLogo}" th:src="@{/img/svt-mark-navy.svg}" alt="SVT logo">
+        </div>
+        <div class="logo-actions">
+            <p class="muted small" th:if="${!hasLogo}">No logo uploaded yet – bills use the SVT logo. Upload your own to replace it.</p>
+            <form th:action="@{/settings/logo}" method="post" enctype="multipart/form-data">
+                <label>Upload logo (PNG, JPG, WEBP or GIF, max 1 MB; square images look best)
+                    <input type="file" name="logo" accept="image/png,image/jpeg,image/webp,image/gif" required></label>
+                <button class="btn">Upload</button>
+            </form>
+            <form th:if="${hasLogo}" th:action="@{/settings/logo/delete}" method="post"
+                  onsubmit="return confirm('Remove the logo?')">
+                <button class="btn danger">Remove logo</button>
+            </form>
+        </div>
+    </div>
+
+    <h2 id="password">Change Password</h2>
+    <form class="card" th:action="@{/settings/password}" method="post">
+        <p class="muted small">Username: <b th:text="${setting.username}"></b></p>
+        <label>Current Password <input type="password" name="oldPassword" required autocomplete="current-password"></label>
+        <label>New Password (min 6 characters) <input type="password" name="newPassword" minlength="6" required autocomplete="new-password"></label>
+        <label>Confirm New Password <input type="password" name="confirmPassword" minlength="6" required autocomplete="new-password"></label>
+        <button class="btn primary">Change Password</button>
+    </form>
+
+    <h2 id="backup">Backup</h2>
+    <div class="card" th:if="${backupSupported}">
+        <div class="card-pad">
+        <p class="muted small" style="margin-top:0">A backup is made automatically every day the app is running, and the
+            newest 30 are kept in <b th:text="${backupDir}"></b>. Copy one to a pen drive or Google Drive every week, so
+            your bills are safe even if this computer breaks.</p>
+        <form th:action="@{/settings/backup}" method="post">
+            <button class="btn primary">Backup now</button>
+        </form>
+        </div>
+        <table class="table" th:if="${!#lists.isEmpty(backups)}">
+            <thead><tr><th>Backup</th><th>Made on</th><th class="r">Size</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="b, st : ${backups}" th:if="${st.count <= 10}">
+                <td th:text="${b.name}"></td>
+                <td th:text="${b.created != null} ? ${#temporals.format(b.created, 'dd/MM/yyyy hh:mm a')} : ''"></td>
+                <td class="r" th:text="${b.sizeKb} + ' KB'"></td>
+                <td class="r"><a th:href="@{/settings/backup/{n}(n=${b.name})}">Download</a></td>
+            </tr>
+            </tbody>
+        </table>
+        <p class="muted small card-pad" th:if="${#lists.isEmpty(backups)}">No backups yet.</p>
+    </div>
+    <div class="card" th:unless="${backupSupported}">
+        <p class="muted small" style="margin:0">You are using an external database (PostgreSQL/MySQL). Back it up every
+            day with <code>pg_dump</code> (see README).</p>
+    </div>
+</main>
+</body>
+</html>

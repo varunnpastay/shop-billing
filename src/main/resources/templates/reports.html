@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Reports')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div class="page-head"><h1>Sales Report</h1></div>
+    <form class="card filters" th:action="@{/reports}" method="get">
+        <label>From <input type="date" name="from" th:value="${from}" required></label>
+        <label>To <input type="date" name="to" th:value="${to}" required></label>
+        <button class="btn">Show</button>
+        <a class="btn ghost" th:href="@{/reports/csv(from=${from},to=${to})}">⬇ Wholesale CSV</a>
+        <a class="btn ghost" th:href="@{/reports/local-csv(from=${from},to=${to})}">⬇ Local CSV</a>
+    </form>
+
+    <h2>Local Bills</h2>
+    <div class="stats">
+        <div class="stat"><span class="muted">Bills</span><strong th:text="${#lists.size(localBills)}"></strong></div>
+        <div class="stat"><span class="muted">Total Sale</span><strong th:text="'₹ ' + ${#numbers.formatDecimal(localSale, 1, 'COMMA', 2, 'POINT')}"></strong></div>
+        <div class="stat"><span class="muted">Customer Savings</span><strong th:text="'₹ ' + ${#numbers.formatDecimal(localSavings, 1, 'COMMA', 2, 'POINT')}"></strong></div>
+        <div class="stat"><span class="muted">Net Payable</span><strong th:text="'₹ ' + ${#numbers.formatDecimal(localNet, 1, 'COMMA', 2, 'POINT')}"></strong></div>
+    </div>
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Bill No</th><th>Date</th><th>Customer</th><th>Mobile</th>
+                <th class="r">Total Sale</th><th class="r">Savings</th><th class="r">Net Payable</th></tr></thead>
+            <tbody>
+            <tr th:each="b : ${localBills}">
+                <td><a th:href="@{/local/{id}(id=${b.id})}" th:text="${b.billNo}"></a></td>
+                <td th:text="${#temporals.format(b.billDate, 'dd/MM/yyyy')}"></td>
+                <td th:text="${b.customerName ?: 'Cash'}"></td>
+                <td th:text="${b.custMobile}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.totalSale, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.totalSavings, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.netPayable, 1, 'COMMA', 2, 'POINT')}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(localBills)}"><td colspan="7" class="muted">No local bills in this period.</td></tr>
+            </tbody>
+            <tfoot th:if="${!#lists.isEmpty(localBills)}">
+            <tr><th colspan="4" class="r">Total</th>
+                <th class="r" th:text="${#numbers.formatDecimal(localSale, 1, 'COMMA', 2, 'POINT')}"></th>
+                <th class="r" th:text="${#numbers.formatDecimal(localSavings, 1, 'COMMA', 2, 'POINT')}"></th>
+                <th class="r" th:text="${#numbers.formatDecimal(localNet, 1, 'COMMA', 2, 'POINT')}"></th></tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <h2>Wholesale Bills (GST)</h2>
+
+    <div class="stats">
+        <div class="stat"><span class="muted">Bills</span><strong th:text="${#lists.size(bills)}"></strong></div>
+        <div class="stat"><span class="muted">Taxable Value</span><strong th:text="'₹ ' + ${#numbers.formatDecimal(taxable, 1, 'COMMA', 2, 'POINT')}"></strong></div>
+        <div class="stat"><span class="muted">CGST + SGST</span><strong th:text="'₹ ' + ${#numbers.formatDecimal(cgst.add(sgst), 1, 'COMMA', 2, 'POINT')}"></strong></div>
+        <div class="stat"><span class="muted">IGST</span><strong th:text="'₹ ' + ${#numbers.formatDecimal(igst, 1, 'COMMA', 2, 'POINT')}"></strong></div>
+        <div class="stat"><span class="muted">Total Sales</span><strong th:text="'₹ ' + ${#numbers.formatDecimal(grand, 1, 'COMMA', 2, 'POINT')}"></strong></div>
+        <div class="stat warn"><span class="muted">Pending</span><strong th:text="'₹ ' + ${#numbers.formatDecimal(pending, 1, 'COMMA', 2, 'POINT')}"></strong></div>
+    </div>
+
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Bill No</th><th>Date</th><th>Customer</th><th>GSTIN</th><th class="r">Taxable</th>
+                <th class="r">CGST</th><th class="r">SGST</th><th class="r">IGST</th><th class="r">Total</th><th>Status</th></tr></thead>
+            <tbody>
+            <tr th:each="b : ${bills}">
+                <td><a th:href="@{/bills/{id}(id=${b.id})}" th:text="${b.billNo}"></a></td>
+                <td th:text="${#temporals.format(b.billDate, 'dd/MM/yyyy')}"></td>
+                <td th:text="${b.customerName}"></td>
+                <td th:text="${b.customerGstin}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.taxableAmount, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.cgst, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.sgst, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.igst, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.grandTotal, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td><span th:replace="~{fragments :: status(${b})}"></span></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(bills)}"><td colspan="10" class="muted">No bills in this period.</td></tr>
+            </tbody>
+            <tfoot th:if="${!#lists.isEmpty(bills)}">
+            <tr><th colspan="4" class="r">Total</th>
+                <th class="r" th:text="${#numbers.formatDecimal(taxable, 1, 'COMMA', 2, 'POINT')}"></th>
+                <th class="r" th:text="${#numbers.formatDecimal(cgst, 1, 'COMMA', 2, 'POINT')}"></th>
+                <th class="r" th:text="${#numbers.formatDecimal(sgst, 1, 'COMMA', 2, 'POINT')}"></th>
+                <th class="r" th:text="${#numbers.formatDecimal(igst, 1, 'COMMA', 2, 'POINT')}"></th>
+                <th class="r" th:text="${#numbers.formatDecimal(grand, 1, 'COMMA', 2, 'POINT')}"></th><th></th></tr>
+            </tfoot>
+        </table>
+    </div>
+</main>
+</body>
+</html>

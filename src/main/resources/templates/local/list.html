@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Local Bills')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="page-head">
+        <h1>Local Bills</h1>
+        <a class="btn primary" th:href="@{/local/new}">+ Local Bill</a>
+    </div>
+
+    <form class="card filters" th:action="@{/local}" method="get">
+        <label>Bill No / Customer / Mobile <input name="q" th:value="${q}" placeholder="Search..."></label>
+        <label>From <input type="date" name="from" th:value="${from}"></label>
+        <label>To <input type="date" name="to" th:value="${to}"></label>
+        <label>Status
+            <select name="status">
+                <option value="ALL" th:selected="${status == 'ALL'}">All</option>
+                <option value="ACTIVE" th:selected="${status == 'ACTIVE'}">Active</option>
+                <option value="CANCELLED" th:selected="${status == 'CANCELLED'}">Cancelled</option>
+            </select>
+        </label>
+        <button class="btn">Search</button>
+        <a class="btn ghost" th:href="@{/local}">Clear</a>
+    </form>
+
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Bill No</th><th>Date</th><th>Customer</th><th>Mobile</th>
+                <th class="r">Total Sale</th><th class="r">Savings</th><th class="r">Net Payable</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="b : ${bills}" th:classappend="${b.cancelled} ? 'cancelled'">
+                <td th:text="${b.billNo}"></td>
+                <td th:text="${#temporals.format(b.billDate, 'dd/MM/yyyy')}"></td>
+                <td th:text="${b.customerName ?: 'Cash'}"></td>
+                <td th:text="${b.custMobile}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.totalSale, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.totalSavings, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.netPayable, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="r nowrap">
+                    <a th:href="@{/local/{id}(id=${b.id})}">Open</a>
+                    <span th:unless="${b.cancelled}"> ·
+                        <a th:href="@{/local/{id}(id=${b.id},print=true)}" target="_blank">Print</a> ·
+                        <form class="inline" th:action="@{/local/{id}/cancel(id=${b.id})}" method="post"
+                              onsubmit="return confirm('Cancel this bill?')">
+                            <input type="hidden" name="value" value="true">
+                            <button class="link danger">Cancel</button>
+                        </form>
+                    </span>
+                    <span th:if="${b.cancelled}"> ·
+                        <form class="inline" th:action="@{/local/{id}/cancel(id=${b.id})}" method="post">
+                            <input type="hidden" name="value" value="false">
+                            <button class="link">Restore</button>
+                        </form>
+                    </span>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(bills)}"><td colspan="8" class="muted">No local bills found.</td></tr>
+            </tbody>
+            <tfoot th:if="${!#lists.isEmpty(bills)}">
+            <tr><th colspan="6" class="r">Total (excluding cancelled)</th>
+                <th class="r" th:text="${#numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}"></th><th></th></tr>
+            </tfoot>
+        </table>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 142" role="img" aria-label="SVT – Shri Vijayalaxmi Textiles">
+  <!-- Colour version for white backgrounds: navy SVT on a maroon silk saree with gold zari. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe69a"/>
+      <stop offset=".45" stop-color="#f2b33d"/>
+      <stop offset="1" stop-color="#c8871a"/>
+    </linearGradient>
+    <linearGradient id="silk" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9c2a55"/>
+      <stop offset="1" stop-color="#5a0f2e"/>
+    </linearGradient>
+  </defs>
+  <text x="106" y="78" text-anchor="middle" fill="#1b2a6b"
+        font-family="'Times New Roman', Times, serif" font-size="74" font-weight="700" letter-spacing="1">SVT</text>
+  <path d="M16 90 C72 108 150 98 194 64 L210 82 C158 122 74 132 16 112 Z" fill="url(#silk)"/>
+  <path d="M20 95 C74 112 152 102 198 69" fill="none" stroke="url(#g)" stroke-width="1.6"/>
+  <path d="M20 108 C75 126 156 116 206 79" fill="none" stroke="url(#g)" stroke-width="1.6"/>
+  <path d="M24 102 C76 119 154 109 202 74" fill="none" stroke="#f6c75a" stroke-width="3.6" stroke-linecap="round"
+        stroke-dasharray="0.1 10"/>
+  <path d="M16 92 l-8 2 M16 97 l-8 2 M16 102 l-8 2 M16 107 l-8 2 M16 111 l-8 2" stroke="url(#g)" stroke-width="1.6"
+        stroke-linecap="round"/>
+  <path d="M194 64 L210 82 L232 128 L225 135 L218 128 L211 136 L204 128 L197 136 L190 128 L184 134 Z" fill="url(#silk)"/>
+  <path d="M199 71 L192 130 M202 74 L204 131 M205 77 L216 131 M208 80 L227 130" stroke="#f6c75a" stroke-opacity=".8"
+        stroke-width="1.1" stroke-linecap="round"/>
+  <path d="M187 123 L230 122" stroke="url(#g)" stroke-width="2"/>
+</svg>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="'Invoice-' + ${bill.billNo} + (${bill.customerName} != null ? '-' + ${bill.customerName} : '')">Invoice</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/logo.svg}">
+    <!-- Same layout as the shop's printed (pink) bill book: navy ink, ruled columns, Rs / Ps amount columns. -->
+    <style th:inline="css">
+        /* margin 0 removes the browser's own header/footer (URL, date) from the print / PDF */
+        @page { size: [(${size})] portrait; margin: 0; }
+        :root { --ink: #1b2a6b; --red: #c62828; }
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        html, body { margin: 0; }
+        body { font-family: Arial, Helvetica, "Nirmala UI", "Noto Sans Kannada", Tunga, sans-serif;
+            background: #e5e9f0; color: var(--ink); }
+
+        .toolbar { background: #0b1f3a; padding: 10px; text-align: center; position: sticky; top: 0; z-index: 5; }
+        .toolbar a, .toolbar button { background: #fff; border: 0; padding: 8px 14px; margin: 3px; border-radius: 6px;
+            cursor: pointer; font: 600 14px "Segoe UI", Arial, sans-serif; text-decoration: none; color: #0b1f3a; display: inline-block; }
+        .toolbar .main { background: #1f4682; color: #fff; }
+        .toolbar a.on { outline: 2px solid #f2b33d; }
+        .toolbar .hint { display: block; color: #9fb0cc; font-size: 12px; margin-top: 4px; }
+
+        /* one physical sheet of paper */
+        .sheet { background: #fff; margin: 16px auto; box-shadow: 0 2px 12px rgba(0,0,0,.25); }
+        .sheet.A4 { width: 210mm; min-height: 297mm; padding: 7mm; font-size: 12.5px; }
+        .sheet.A5 { width: 148mm; min-height: 210mm; padding: 5mm; font-size: 8.8px; }
+        .A4 .bill { min-height: 283mm; }
+        .A5 .bill { min-height: 200mm; }
+
+        .bill { border: 2.5px solid var(--ink); outline: 1px solid var(--ink); outline-offset: 2px;
+            display: flex; flex-direction: column; position: relative; }
+
+        /* ---------- header ---------- */
+        .top { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; padding: .5em .8em 0; font-weight: 700; }
+        .top .gst { font-size: 1.05em; letter-spacing: .02em; }
+        .top .mid { text-align: center; font-size: .78em; line-height: 1.25; }
+        .top .mid .bless { font-weight: 700; }
+        .top .mob { text-align: right; font-size: 1.02em; line-height: 1.3; }
+
+        .head { display: flex; align-items: center; gap: 1em; padding: .1em .8em .4em; }
+        .logo { width: 7.2em; height: 7.2em; flex: none; display: flex; align-items: center; justify-content: center; }
+        .logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .logo img.deity { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1.5px solid var(--ink); }
+        .shop { flex: 1; min-width: 0; text-align: center; }
+        .shop .local { font-size: 2.15em; font-weight: 700; line-height: 1.2; }
+        .shop h1 { margin: 0; font-size: 2.3em; font-weight: 700; letter-spacing: .01em;
+            line-height: 1.1; text-transform: uppercase; }
+        .shop .addr { white-space: pre-line; font-size: 1.08em; font-weight: 600; line-height: 1.35; margin-top: .15em; }
+        .copy-wrap { text-align: right; }
+        .copy { border: 1.5px solid var(--ink); padding: .1em .5em;
+            font-size: .72em; font-weight: 700; letter-spacing: .05em; }
+
+        .meta { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; padding: 0 .8em .2em; }
+        .meta .no { font-size: 1.05em; }
+        .meta .no b { color: var(--red); font-size: 1.45em; margin-left: .5em; }
+        .meta .kind { text-align: center; font-weight: 800; text-decoration: underline; font-size: 1.05em; }
+        .line-field { display: flex; align-items: baseline; gap: .5em; padding: .25em .8em; }
+        .line-field .lbl { font-weight: 700; white-space: nowrap; }
+        .line-field .val { flex: 1; border-bottom: 1px dotted var(--ink); color: #111; font-size: 1.15em;
+            min-height: 1.4em; padding: 0 .3em; font-weight: 600; }
+        .row2 { display: grid; grid-template-columns: 1fr 34%; }
+        .date .val { text-align: center; }
+        .party-sub { padding: 0 .8em .3em 3.4em; color: #333; font-size: .92em; }
+
+        /* ---------- items ---------- */
+        .items { flex: 1; position: relative; display: flex; flex-direction: column; border-top: 2px solid var(--ink); }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .items th { border-bottom: 2px solid var(--ink); padding: .45em .4em; font-size: 1.02em; font-weight: 700; }
+        .items th .sub { display: flex; justify-content: space-between; font-size: .9em; padding: 0 .3em; }
+        .items td { padding: .55em .4em .3em; vertical-align: top; word-wrap: break-word; color: #111; font-size: 1.05em; }
+        .items td.part .d { padding-left: 1.5em; font-size: .92em; color: #333; }
+        .items td.part .h { padding-left: 1.5em; font-size: .8em; color: #555; }
+        .vline { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1.5px solid var(--ink); }
+        .c { text-align: center; } .r { text-align: right; }
+
+        /* ---------- totals (same columns as the item table) ---------- */
+        .sum { border-top: 2px solid var(--ink); }
+        .sum td { padding: .35em .4em; vertical-align: middle; }
+        .sum td.lbl { font-weight: 700; border-left: 1.5px solid var(--ink); }
+        .sum td.pct { font-weight: 700; text-align: center; }
+        .sum td.rs { border-left: 1.5px solid var(--ink); text-align: right; color: #111; font-weight: 600; }
+        .sum td.ps { border-left: 1px solid var(--ink); text-align: center; color: #111; }
+        .sum tr + tr td.lbl, .sum tr + tr td.pct, .sum tr + tr td.rs, .sum tr + tr td.ps { border-top: 1px solid var(--ink); }
+        .sum tr.grand td { border-top: 2px solid var(--ink); font-size: 1.15em; padding: .45em .4em; }
+        .sum tr.grand td.rs, .sum tr.grand td.ps { font-weight: 800; }
+        .sum td.words { vertical-align: top; padding: .5em .8em; }
+        .words .lbl2 { font-weight: 700; }
+        .words .val { color: #111; font-size: 1.05em; font-weight: 600;
+            border-bottom: 1px solid var(--ink); line-height: 1.7; }
+        .extra { margin-top: .6em; font-size: .88em; color: #333; white-space: pre-line; }
+        .extra b { color: var(--ink); }
+
+        /* ---------- footer ---------- */
+        .terms { border-top: 2px solid var(--ink); padding: .45em .8em; font-size: .92em; font-weight: 600; line-height: 1.35; }
+
+        .sign { display: flex; justify-content: space-between; align-items: flex-end; padding: .2em .8em .6em; min-height: 6.5em; }
+        .sign .cons { font-weight: 700; font-size: 1.1em; }
+        .sign .prop { text-align: right; font-weight: 700; display: flex; flex-direction: column; justify-content: space-between;
+            align-self: stretch; }
+        .sign .prop .for { font-size: 1.02em; }
+        
+
+        .cancel { position: absolute; top: 45%; left: 0; right: 0; text-align: center; font-size: 6em; font-weight: 900;
+            color: rgba(198, 40, 40, .2); transform: rotate(-28deg); pointer-events: none; letter-spacing: .1em; }
+
+        @media print {
+            body { background: #fff; }
+            .toolbar { display: none; }
+            .sheet { margin: 0; box-shadow: none; min-height: 0; }
+        }
+    </style>
+</head>
+<body th:with="gst=${bill.taxType != 'NONE'}">
+<div class="toolbar">
+    <button class="main" type="button" onclick="window.print()">🖨 Print / Save as PDF</button>
+    <a th:href="@{/bills/{id}/print(id=${bill.id},size='A4',copy=${copy})}" th:classappend="${size == 'A4'} ? 'on'">A4</a>
+    <a th:href="@{/bills/{id}/print(id=${bill.id},size='A5',copy=${copy})}" th:classappend="${size == 'A5'} ? 'on'">A5</a>
+    <a th:href="@{/bills/{id}/print(id=${bill.id},size=${size},copy='ORIGINAL')}" th:classappend="${copy == 'ORIGINAL'} ? 'on'">Original</a>
+    <a th:href="@{/bills/{id}/print(id=${bill.id},size=${size},copy='DUPLICATE')}" th:classappend="${copy == 'DUPLICATE'} ? 'on'">Duplicate</a>
+    <a th:href="@{/bills/{id}(id=${bill.id})}">Back</a>
+    <a th:href="@{/bills/new}">New Bill</a>
+    <span class="hint">For a PDF choose “Save as PDF” as the printer. Set paper size to match (A4/A5) and margins to “None”.</span>
+</div>
+
+<div class="sheet" th:classappend="${size}">
+    <div class="bill">
+        <div class="cancel" th:if="${bill.cancelled}">CANCELLED</div>
+        <!-- GSTIN · blessing / jurisdiction · mobiles -->
+        <div class="top">
+            <div class="gst" th:text="${shop.gstin != null} ? 'GSTIN : ' + ${shop.gstin} : ''"></div>
+            <div class="mid">
+                <div class="bless" th:if="${shop.invoiceBlessing}" th:text="${shop.invoiceBlessing}"></div>
+                <div th:if="${shop.jurisdiction}" th:text="${shop.jurisdiction}"></div>
+            </div>
+            <div class="mob">
+                <div th:if="${shop.mobile}" th:text="'Mob.: ' + ${shop.mobile}"></div>
+                <div th:if="${shop.mobile2}" th:text="'Mob.: ' + ${shop.mobile2}"></div>
+            </div>
+        </div>
+
+        <!-- logo + shop name -->
+        <div class="head">
+            <div class="logo" th:if="${shop.logoOnBill}">
+                <img th:if="${hasLogo}" th:src="@{/shop-logo}" alt="">
+                <img th:unless="${hasLogo}" class="deity" th:src="@{/img/brand-lakshmi.jpg}" alt="Shri Lakshmi">
+
+            </div>
+            <div class="shop">
+                <div class="local" th:if="${shop.shopNameLocal}" th:text="${shop.shopNameLocal}"></div>
+                <h1 th:text="${shop.shopName}">Shop</h1>
+                <div class="addr" th:text="${shop.invoiceAddress ?: shop.address}"></div>
+            </div>
+        </div>
+
+        <!-- invoice no · cash/credit · (date on next line) -->
+        <div class="meta">
+            <div class="no"><span th:text="${gst} ? 'Tax Invoice No' : 'Bill No'">Tax Invoice No</span><b th:text="${bill.billNo}"></b></div>
+            <div class="kind">CASH/CREDIT BILL</div>
+            <div class="copy-wrap"><span class="copy" th:if="${copy == 'DUPLICATE'}">DUPLICATE COPY</span></div>
+        </div>
+
+        <div class="row2">
+            <div class="line-field"><span class="lbl">M/s</span><span class="val" th:text="${bill.customerName}"></span></div>
+            <div class="line-field date"><span class="lbl">Date :</span>
+                <span class="val" th:text="${#temporals.format(bill.billDate, 'dd-MM-yyyy')}"></span></div>
+        </div>
+        <div class="party-sub" th:if="${bill.customerAddress != null or bill.customerPhone != null}">
+            <span th:text="${bill.customerAddress}"></span>
+            <span th:if="${bill.customerAddress != null and bill.customerPhone != null}"> · </span>
+            <span th:if="${bill.customerPhone}" th:text="'Ph: ' + ${bill.customerPhone}"></span>
+        </div>
+        <div class="row2">
+            <div class="line-field"><span class="lbl">PARTY GSTIN :</span>
+                <span class="val" th:text="${bill.customerGstin}" style="letter-spacing:.12em"></span></div>
+            <div class="line-field"><span class="lbl">By :</span><span class="val" th:text="${bill.byName}"></span></div>
+        </div>
+
+        <!-- items; column lines run down the whole area so the table fills the page -->
+        <div class="items">
+            <div class="vline" style="left:7%"></div>
+            <div class="vline" style="left:52%"></div>
+            <div class="vline" style="left:62%"></div>
+            <div class="vline" style="left:73%"></div>
+            <div class="vline" style="left:84%"></div>
+            <div class="vline" style="left:96%; border-left-width:1px"></div>
+            <table>
+                <colgroup>
+                    <col style="width:7%"><col style="width:45%"><col style="width:10%">
+                    <col style="width:11%"><col style="width:11%"><col style="width:12%"><col style="width:4%">
+                </colgroup>
+                <thead>
+                <tr>
+                    <th style="text-align:left">No.</th>
+                    <th>Particulars</th>
+                    <th>Piece</th>
+                    <th>Metter</th>
+                    <th>Rate</th>
+                    <th colspan="2">Amount<div class="sub"><span style="margin-left:35%">Rs</span><span>Ps</span></div></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="i, st : ${bill.items}">
+                    <td th:text="${st.count} + '.'"></td>
+                    <td class="part">
+                        <div th:text="${i.particulars}"></div>
+                        <div class="d" th:if="${i.details}" th:text="${i.details}"></div>
+                        <div class="h" th:if="${i.hsn}" th:text="'HSN: ' + ${i.hsn}"></div>
+                    </td>
+                    <td class="c" th:text="${@money.qty(i.qty)}"></td>
+                    <td class="c" th:text="${i.unit}"></td>
+                    <td class="r" th:text="${@money.rs(i.rate)} + '.' + ${@money.ps(i.rate)}"></td>
+                    <td class="r" th:text="${@money.rs(i.amount)}"></td>
+                    <td class="c" th:text="${@money.ps(i.amount)}"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- totals, aligned under Metter / Rate / Amount like the paper bill -->
+        <table class="sum">
+            <colgroup>
+                <col style="width:7%"><col style="width:45%"><col style="width:10%">
+                <col style="width:11%"><col style="width:11%"><col style="width:12%"><col style="width:4%">
+            </colgroup>
+            <tr>
+                <td colspan="3" class="words" rowspan="10">
+                    <div class="words"><span class="lbl2">Rupee's in Words : </span>
+                        <span class="val" th:text="${words}"></span></div>
+                    <div class="extra" th:if="${shop.bankDetails}"><b>Bank: </b><span th:text="${shop.bankDetails}"></span></div>
+                    <div class="extra" th:if="${bill.notes}"><b>Note: </b><span th:text="${bill.notes}"></span></div>
+                </td>
+                <td class="lbl">Total</td><td class="pct"></td>
+                <td class="rs" th:text="${@money.rs(bill.subTotal)}"></td><td class="ps" th:text="${@money.ps(bill.subTotal)}"></td>
+            </tr>
+            <tr th:if="${bill.discount != null and bill.discount.signum() > 0}">
+                <td class="lbl">Discount</td><td class="pct"></td>
+                <td class="rs" th:text="'-' + ${@money.rs(bill.discount)}"></td><td class="ps" th:text="${@money.ps(bill.discount)}"></td>
+            </tr>
+            <tr th:if="${bill.discount != null and bill.discount.signum() > 0 and gst}">
+                <td class="lbl">Taxable</td><td class="pct"></td>
+                <td class="rs" th:text="${@money.rs(bill.taxableAmount)}"></td><td class="ps" th:text="${@money.ps(bill.taxableAmount)}"></td>
+            </tr>
+            <tr th:if="${bill.taxType == 'CGST_SGST'}">
+                <td class="lbl">CGST</td><td class="pct" th:text="${bill.halfGstLabel} + ' %'"></td>
+                <td class="rs" th:text="${@money.rs(bill.cgst)}"></td><td class="ps" th:text="${@money.ps(bill.cgst)}"></td>
+            </tr>
+            <tr th:if="${bill.taxType == 'CGST_SGST'}">
+                <td class="lbl">SGST</td><td class="pct" th:text="${bill.halfGstLabel} + ' %'"></td>
+                <td class="rs" th:text="${@money.rs(bill.sgst)}"></td><td class="ps" th:text="${@money.ps(bill.sgst)}"></td>
+            </tr>
+            <tr th:if="${bill.taxType == 'IGST'}">
+                <td class="lbl">IGST</td><td class="pct" th:text="${bill.gstLabel} + ' %'"></td>
+                <td class="rs" th:text="${@money.rs(bill.igst)}"></td><td class="ps" th:text="${@money.ps(bill.igst)}"></td>
+            </tr>
+            <tr th:if="${bill.roundOff.signum() != 0}">
+                <td class="lbl">Round Off</td><td class="pct"></td>
+                <td class="rs" th:text="${@money.rs(bill.roundOff)}"></td><td class="ps" th:text="${@money.ps(bill.roundOff)}"></td>
+            </tr>
+            <tr class="grand">
+                <td class="lbl" colspan="2">Grand Total</td>
+                <td class="rs" th:text="${@money.rs(bill.grandTotal)}"></td><td class="ps" th:text="${@money.ps(bill.grandTotal)}"></td>
+            </tr>
+        </table>
+
+        <div class="terms" th:if="${shop.terms}" th:text="${shop.terms}"></div>
+
+        <div class="sign">
+            <div class="cons">Signature of consignee.</div>
+            <div class="prop">
+                <div class="for"><span>For</span> : <span th:text="${#strings.toUpperCase(shop.shopName)} + '.'"></span></div>
+                <div>PROPRIETOR.</div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Login')}"></head>
+<body class="login-body">
+<div class="login-split">
+    <div class="login-art" role="img" th:aria-label="${shop.shopName}"></div>
+    <form class="login-card" th:action="@{/login}" method="post">
+        <div class="login-head">
+            <img th:if="${hasLogo}" th:src="@{/shop-logo}" alt="" class="login-logo">
+            <img th:unless="${hasLogo}" th:src="@{/img/svt-mark-navy.svg}" alt="SVT" class="login-logo wide">
+            <h2 th:text="${shop.shopName}">Shop</h2>
+            <p class="muted">Billing System – Sign in</p>
+        </div>
+        <div class="alert ok" th:if="${msg}" th:text="${msg}"></div>
+        <div class="alert err" th:if="${error}" th:text="${error}"></div>
+        <label>Username <input name="username" th:value="${username}" required autofocus autocomplete="username"></label>
+        <label>Password <input type="password" name="password" required autocomplete="current-password"></label>
+        <button class="btn primary full">Login</button>
+    </form>
+</div>
+</body>
+</html>

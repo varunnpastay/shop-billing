@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Dashboard')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <section class="welcome">
+        <div class="hero-text">
+            <div class="hero-date" th:text="${#temporals.format(#temporals.createToday(), 'EEEE, dd MMMM yyyy')}"></div>
+            <h1 th:text="${shop.shopName}">Shop</h1>
+            <p th:text="${shop.receiptSubtitle ?: 'Billing Dashboard'}"></p>
+            <div class="btn-row">
+                <a class="btn accent" th:href="@{/local/new}">+ Local Bill</a>
+                <a class="btn hero-btn" th:href="@{/bills/new}">+ Wholesale Bill</a>
+            </div>
+        </div>
+        <img class="hero-art" th:src="@{/img/brand-svt.jpg}" alt="SVT">
+    </section>
+
+    <div class="stats">
+        <div class="stat hero">
+            <span class="muted">Today – Total</span>
+            <strong th:text="'₹ ' + ${#numbers.formatDecimal(todayTotal.add(localTodayTotal), 1, 'COMMA', 2, 'POINT')}">0</strong>
+            <span class="small muted" th:text="${todayCount + localTodayCount} + (${todayCount + localTodayCount} == 1 ? ' bill' : ' bills')"></span>
+        </div>
+        <div class="stat">
+            <span class="muted">Today – Local</span>
+            <strong th:text="'₹ ' + ${#numbers.formatDecimal(localTodayTotal, 1, 'COMMA', 2, 'POINT')}">0</strong>
+            <span class="small muted" th:text="${localTodayCount} + (${localTodayCount} == 1 ? ' bill' : ' bills')"></span>
+        </div>
+        <div class="stat">
+            <span class="muted">Today – Wholesale</span>
+            <strong th:text="'₹ ' + ${#numbers.formatDecimal(todayTotal, 1, 'COMMA', 2, 'POINT')}">0</strong>
+            <span class="small muted" th:text="${todayCount} + (${todayCount} == 1 ? ' bill' : ' bills')"></span>
+        </div>
+        <div class="stat">
+            <span class="muted">This Month – Local</span>
+            <strong th:text="'₹ ' + ${#numbers.formatDecimal(localMonthTotal, 1, 'COMMA', 2, 'POINT')}">0</strong>
+            <span class="small muted" th:text="${localMonthCount} + (${localMonthCount} == 1 ? ' bill' : ' bills')"></span>
+        </div>
+        <div class="stat">
+            <span class="muted">This Month – Wholesale</span>
+            <strong th:text="'₹ ' + ${#numbers.formatDecimal(monthTotal, 1, 'COMMA', 2, 'POINT')}">0</strong>
+            <span class="small muted" th:text="${monthCount} + (${monthCount} == 1 ? ' bill' : ' bills')"></span>
+        </div>
+        <div class="stat">
+            <span class="muted">GST This Month</span>
+            <strong th:text="'₹ ' + ${#numbers.formatDecimal(monthGst, 1, 'COMMA', 2, 'POINT')}">0</strong>
+        </div>
+        <div class="stat warn">
+            <span class="muted">Pending (Credit)</span>
+            <strong th:text="'₹ ' + ${#numbers.formatDecimal(unpaidTotal, 1, 'COMMA', 2, 'POINT')}">0</strong>
+            <a class="small" th:href="@{/bills(status='UNPAID')}" th:text="${unpaidCount} + (${unpaidCount} == 1 ? ' unpaid bill →' : ' unpaid bills →')"></a>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>Recent Wholesale Bills</h3>
+        <table class="table">
+            <thead><tr><th>Bill No</th><th>Date</th><th>Customer</th><th class="r">Amount</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="b : ${recent}">
+                <td th:text="${b.billNo}"></td>
+                <td th:text="${#temporals.format(b.billDate, 'dd/MM/yyyy')}"></td>
+                <td th:text="${b.customerName}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.grandTotal, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td><span th:replace="~{fragments :: status(${b})}"></span></td>
+                <td class="r"><a th:href="@{/bills/{id}(id=${b.id})}">Open</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(recent)}"><td colspan="6" class="muted">No bills yet. Create your first bill.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>Recent Local Bills</h3>
+        <table class="table">
+            <thead><tr><th>Bill No</th><th>Date</th><th>Customer</th><th class="r">Net Payable</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="b : ${localRecent}" th:classappend="${b.cancelled} ? 'cancelled'">
+                <td th:text="${b.billNo}"></td>
+                <td th:text="${#temporals.format(b.billDate, 'dd/MM/yyyy')}"></td>
+                <td th:text="${b.customerName ?: 'Cash'}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.netPayable, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td class="r"><a th:href="@{/local/{id}(id=${b.id})}">Open</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(localRecent)}"><td colspan="5" class="muted">No local bills yet.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

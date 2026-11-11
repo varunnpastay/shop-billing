@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Bill')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="page-head">
+        <h1 th:text="${bill.id == null} ? 'New Wholesale Bill' : 'Edit Wholesale Bill #' + ${bill.billNo}">Bill</h1>
+        <span class="muted" th:if="${bill.id == null}" th:text="'Bill No will be: ' + ${bill.billNo}"></span>
+    </div>
+
+    <form id="billForm" th:action="@{/bills/save}" th:object="${bill}" method="post">
+        <input type="hidden" th:field="*{id}">
+
+        <div class="card grid-4">
+            <label class="span-2">Customer Name (M/s.)
+                <input th:field="*{customerName}" list="customerList" id="customerName" required autocomplete="off">
+            </label>
+            <label>Bill Date <input type="date" th:field="*{billDate}" required></label>
+            <label>Bill Type
+                <select th:field="*{billType}">
+                    <option value="CASH">Cash</option>
+                    <option value="CREDIT">Credit</option>
+                </select>
+            </label>
+            <label class="span-2">Address / Place <input th:field="*{customerAddress}" id="customerAddress" placeholder="e.g. Harihar"></label>
+            <label>Party GSTIN <input th:field="*{customerGstin}" id="customerGstin" maxlength="15" style="text-transform:uppercase"></label>
+            <label>Phone <input th:field="*{customerPhone}" id="customerPhone"></label>
+            <label class="span-2">By (salesman / agent) <input th:field="*{byName}" list="byList" autocomplete="off"></label>
+        </div>
+        <datalist id="byList">
+            <option th:each="n : ${byNames}" th:value="${n}"></option>
+        </datalist>
+
+        <datalist id="customerList">
+            <option th:each="c : ${customers}" th:value="${c.name}"></option>
+        </datalist>
+        <datalist id="productList">
+            <option th:each="p : ${products}" th:value="${p.name}"></option>
+        </datalist>
+
+        <div class="card">
+            <table class="table items" id="itemsTable">
+                <thead>
+                <tr><th style="width:40px">#</th><th>Particulars</th><th style="width:90px">HSN</th>
+                    <th style="width:90px">Piece</th><th style="width:100px">Metter</th><th style="width:120px">Rate</th>
+                    <th style="width:130px" class="r">Amount</th><th style="width:40px"></th></tr>
+                </thead>
+                <tbody id="itemsBody">
+                <tr th:each="item, st : *{items}" class="item-row">
+                    <td class="sl" th:text="${st.count}"></td>
+                    <td><input th:field="*{items[__${st.index}__].particulars}" data-f="particulars" list="productList" autocomplete="off" placeholder="Item">
+                        <input th:field="*{items[__${st.index}__].details}" data-f="details" class="details" placeholder="Details (e.g. 100 color + 10 black)" autocomplete="off"></td>
+                    <td><input th:field="*{items[__${st.index}__].hsn}" data-f="hsn"></td>
+                    <td><input type="number" step="0.001" min="0" th:field="*{items[__${st.index}__].qty}" data-f="qty"></td>
+                    <td><input th:field="*{items[__${st.index}__].unit}" data-f="unit" placeholder="e.g. 7 Part"></td>
+                    <td><input type="number" step="0.01" min="0" th:field="*{items[__${st.index}__].rate}" data-f="rate"></td>
+                    <td class="r amt">0.00</td>
+                    <td><button type="button" class="btn-x" title="Remove">✕</button></td>
+                </tr>
+                </tbody>
+            </table>
+            <button type="button" class="btn ghost" id="addRow">+ Add Item (Alt+A)</button>
+        </div>
+
+        <div class="bill-bottom">
+            <div class="card">
+                <label>Tax Type
+                    <select th:field="*{taxType}" id="taxType">
+                        <option value="CGST_SGST">CGST + SGST (within state)</option>
+                        <option value="IGST">IGST (other state)</option>
+                        <option value="NONE">No GST</option>
+                    </select>
+                </label>
+                <label>GST Rate (%)
+                    <input type="number" step="0.01" min="0" max="100" th:field="*{gstPercent}" id="gstPercent" list="gstRates">
+                    <datalist id="gstRates"><option value="0"><option value="5"><option value="12"><option value="18"><option value="28"></datalist>
+                </label>
+                <label>Discount (₹) <input type="number" step="0.01" min="0" th:field="*{discount}" id="discount"></label>
+                <label>Notes <textarea th:field="*{notes}" rows="2"></textarea></label>
+            </div>
+
+            <div class="card totals">
+                <div><span>Sub Total</span><b id="tSub">0.00</b></div>
+                <div><span>Discount</span><b id="tDisc">0.00</b></div>
+                <div><span>Taxable Amount</span><b id="tTaxable">0.00</b></div>
+                <div class="cgst-row"><span id="lCgst">CGST</span><b id="tCgst">0.00</b></div>
+                <div class="cgst-row"><span id="lSgst">SGST</span><b id="tSgst">0.00</b></div>
+                <div class="igst-row"><span id="lIgst">IGST</span><b id="tIgst">0.00</b></div>
+                <div><span>Round Off</span><b id="tRound">0.00</b></div>
+                <div class="grand"><span>Grand Total</span><b id="tGrand">0.00</b></div>
+                <div class="actions">
+                    <button class="btn" name="print" value="false">Save</button>
+                    <button class="btn primary" name="print" value="true">Save &amp; Print</button>
+                </div>
+            </div>
+        </div>
+    </form>
+</main>
+
+<template id="rowTemplate">
+    <tr class="item-row">
+        <td class="sl"></td>
+        <td><input data-f="particulars" list="productList" autocomplete="off" placeholder="Item">
+            <input data-f="details" class="details" placeholder="Details (e.g. 100 color + 10 black)" autocomplete="off"></td>
+        <td><input data-f="hsn"></td>
+        <td><input type="number" step="0.001" min="0" data-f="qty"></td>
+        <td><input data-f="unit" placeholder="e.g. 7 Part"></td>
+        <td><input type="number" step="0.01" min="0" data-f="rate"></td>
+        <td class="r amt">0.00</td>
+        <td><button type="button" class="btn-x" title="Remove">✕</button></td>
+    </tr>
+</template>
+
+<script th:inline="javascript">
+    const CUSTOMERS = /*[[${customers}]]*/ [];
+    const PRODUCTS = /*[[${products}]]*/ [];
+</script>
+<script th:src="@{/js/bill.js}"></script>
+</body>
+</html>

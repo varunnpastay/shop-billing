@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Customer')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container narrow">
+    <div th:replace="~{fragments :: flash}"></div>
+    <h1 th:text="${customer.id == null} ? 'Add Customer' : 'Edit Customer'"></h1>
+    <form class="card" th:action="@{/customers/save}" th:object="${customer}" method="post">
+        <input type="hidden" th:field="*{id}">
+        <label>Name * <input th:field="*{name}" required></label>
+        <label>Address <textarea th:field="*{address}" rows="2"></textarea></label>
+        <label>GSTIN <input th:field="*{gstin}" maxlength="15"></label>
+        <label>Phone <input th:field="*{phone}"></label>
+        <label>State <input th:field="*{stateName}"></label>
+        <div class="btn-row">
+            <button class="btn primary">Save</button>
+            <a class="btn ghost" th:href="@{/customers}">Cancel</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

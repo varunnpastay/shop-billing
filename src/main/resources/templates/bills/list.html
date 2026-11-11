@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Wholesale Bills')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="page-head">
+        <h1>Wholesale Bills</h1>
+        <a class="btn primary" th:href="@{/bills/new}">+ Wholesale Bill</a>
+    </div>
+
+    <form class="card filters" th:action="@{/bills}" method="get">
+        <label>Bill No / Customer <input name="q" th:value="${q}" placeholder="Search..."></label>
+        <label>From <input type="date" name="from" th:value="${from}"></label>
+        <label>To <input type="date" name="to" th:value="${to}"></label>
+        <label>Status
+            <select name="status">
+                <option value="ALL" th:selected="${status == 'ALL'}">All</option>
+                <option value="PAID" th:selected="${status == 'PAID'}">Paid</option>
+                <option value="UNPAID" th:selected="${status == 'UNPAID'}">Unpaid</option>
+                <option value="CANCELLED" th:selected="${status == 'CANCELLED'}">Cancelled</option>
+            </select>
+        </label>
+        <button class="btn">Search</button>
+        <a class="btn ghost" th:href="@{/bills}">Clear</a>
+    </form>
+
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Bill No</th><th>Date</th><th>Customer</th><th>Type</th><th class="r">Amount</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="b : ${bills}" th:classappend="${b.cancelled} ? 'cancelled'">
+                <td th:text="${b.billNo}"></td>
+                <td th:text="${#temporals.format(b.billDate, 'dd/MM/yyyy')}"></td>
+                <td th:text="${b.customerName}"></td>
+                <td th:text="${b.billType}"></td>
+                <td class="r" th:text="${#numbers.formatDecimal(b.grandTotal, 1, 'COMMA', 2, 'POINT')}"></td>
+                <td><span th:replace="~{fragments :: status(${b})}"></span></td>
+                <td class="r nowrap">
+                    <a th:href="@{/bills/{id}(id=${b.id})}">Open</a> ·
+                    <a th:href="@{/bills/{id}/print(id=${b.id})}" target="_blank">Print</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(bills)}"><td colspan="7" class="muted">No bills found.</td></tr>
+            </tbody>
+            <tfoot th:if="${!#lists.isEmpty(bills)}">
+            <tr><th colspan="4" class="r">Total (excluding cancelled)</th>
+                <th class="r" th:text="${#numbers.formatDecimal(total, 1, 'COMMA', 2, 'POINT')}"></th><th colspan="2"></th></tr>
+            </tfoot>
+        </table>
+    </div>
+</main>
+</body>
+</html>

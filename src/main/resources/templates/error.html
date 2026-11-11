@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Something went wrong</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/logo.svg}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="login-body">
+<div class="card login-card error-card">
+    <img th:src="@{/img/logo.svg}" alt="" class="login-logo">
+    <h2 th:switch="${status}">
+        <span th:case="404">Page not found</span>
+        <span th:case="403">Not allowed</span>
+        <span th:case="400">Invalid request</span>
+        <span th:case="*">Something went wrong</span>
+    </h2>
+    <p class="muted" th:switch="${status}">
+        <span th:case="404">The page or record you are looking for does not exist or was deleted.</span>
+        <span th:case="403">This request was blocked for security reasons. Go back and try again.</span>
+        <span th:case="400">Some of the information sent was not valid.</span>
+        <span th:case="*">An unexpected error occurred. Please try again. If it keeps happening, restart the application.</span>
+    </p>
+    <p class="small muted" th:text="'Error code: ' + ${status}"></p>
+    <a class="btn primary full" th:href="@{/}">Go to Dashboard</a>
+</div>
+</body>
+</html>

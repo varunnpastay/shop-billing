@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Customers')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="page-head">
+        <h1>Customers</h1>
+        <a class="btn primary" th:href="@{/customers/new}">+ Add Customer</a>
+    </div>
+    <form class="card filters" th:action="@{/customers}" method="get">
+        <label>Search <input name="q" th:value="${q}" placeholder="Customer name"></label>
+        <button class="btn">Search</button>
+    </form>
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Name</th><th>Address</th><th>GSTIN</th><th>Phone</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="c : ${customers}">
+                <td th:text="${c.name}"></td>
+                <td th:text="${c.address}"></td>
+                <td th:text="${c.gstin}"></td>
+                <td th:text="${c.phone}"></td>
+                <td class="r nowrap">
+                    <a th:href="@{/bills(q=${c.name})}">Bills</a> ·
+                    <a th:href="@{/customers/{id}/edit(id=${c.id})}">Edit</a> ·
+                    <form class="inline" th:action="@{/customers/{id}/delete(id=${c.id})}" method="post"
+                          onsubmit="return confirm('Delete this customer?')">
+                        <button class="link danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(customers)}"><td colspan="5" class="muted">No customers. They are also added automatically when you save a bill.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

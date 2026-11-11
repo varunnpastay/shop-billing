@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="'Local Bill | ' + ${shop.shopName}">Local Bill</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/img/logo.svg}">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/local-bill.css}">
+</head>
+<body class="sb-body">
+<header th:replace="~{fragments :: nav}"></header>
+
+<div class="sb"
+     th:data-bill-id="${billId}"
+     th:data-auto-print="${autoPrint}"
+     th:data-next-bill-no="${nextBillNo}"
+     th:data-upi="${shop.upiId}"
+     th:data-shop-name="${shop.shopName}"
+     th:data-save-url="@{/local/save}"
+     th:data-api-url="@{/local/api}"
+     th:data-open-url="@{/local}">
+    <div class="app-wrapper">
+        <div class="controls">
+            <div class="controls-head">
+                <h2>Local Bill Entry</h2>
+                <span class="bill-no-chip" id="bill-no-chip"></span>
+            </div>
+            <div class="controls-body">
+            <div id="sb-msg" class="sb-msg" hidden></div>
+            <form id="bill-form" autocomplete="off" onsubmit="return false">
+                <input type="hidden" id="billId">
+                <div class="field-grid">
+                    <div class="field-row">
+                        <label for="billNo">Bill No</label>
+                        <input type="text" id="billNo" name="billNo" readonly title="Given automatically when the bill is saved">
+                    </div>
+                    <div class="field-row">
+                        <label for="billDate">Date</label>
+                        <input type="date" id="billDate" name="billDate" required>
+                    </div>
+                    <div class="field-row">
+                        <label for="customerName">Customer Name</label>
+                        <input type="text" id="customerName" name="customerName" list="customer-list" placeholder="Cash">
+                    </div>
+                    <div class="field-row">
+                        <label for="custMobile">Cust Mobile No</label>
+                        <input type="tel" id="custMobile" name="custMobile" inputmode="numeric" maxlength="15">
+                    </div>
+                </div>
+
+                <h3>Items</h3>
+                <table class="items-input entry">
+                    <thead>
+                    <tr><th>Item</th><th>Qty</th><th>MRP</th><th>Rate</th><th></th></tr>
+                    </thead>
+                    <tbody id="items-input-body"><!-- rows added by JS --></tbody>
+                </table>
+                <button type="button" id="add-row-btn">+ Add Item Row</button>
+
+                <div class="totals-box">
+                    <div class="field-row">
+                        <label for="totalSale">Total Sale</label>
+                        <input type="number" step="0.01" id="totalSale" name="totalSale" readonly tabindex="-1">
+                    </div>
+                    <div class="field-row">
+                        <label for="totalSavings">Total Savings</label>
+                        <input type="number" step="0.01" id="totalSavings" name="totalSavings" value="0" readonly tabindex="-1">
+                    </div>
+                    <div class="field-row">
+                        <label for="netPayable">Net Payable (₹)</label>
+                        <input type="number" step="0.01" id="netPayable" name="netPayable" readonly tabindex="-1">
+                    </div>
+                </div>
+
+                <div class="action-row">
+                    <button type="button" id="print-btn">Print Bill</button>
+                    <button type="button" id="new-bill-btn">New Bill</button>
+                </div>
+
+                <div class="tools">
+                    <h3>Saved Bills</h3>
+                    <div class="field-row inline">
+                        <label for="savedBills">Bill No</label>
+                        <select id="savedBills"><option value="">-- Select --</option></select>
+                        <button type="button" id="load-bill-btn">Load</button>
+                    </div>
+                    <p class="sb-hint"><a th:href="@{/local}">All local bills (search, cancel, reprint) →</a></p>
+
+                    <h3>Daily Sales Report</h3>
+                    <div class="field-row inline">
+                        <label for="reportDate">Date</label>
+                        <input type="date" id="reportDate">
+                        <button type="button" id="show-report-btn">Show</button>
+                    </div>
+                    <div id="report-summary"></div>
+                    <div id="report-bills"></div>
+                </div>
+            </form>
+            </div>
+
+            <datalist id="customer-list">
+                <option th:each="c : ${customers}" th:value="${c.name}" th:data-phone="${c.phone}"></option>
+            </datalist>
+            <datalist id="product-list">
+                <option th:each="p : ${products}" th:value="${p.name}"
+                        th:data-rate="${p.rate}" th:data-mrp="${p.mrp}"></option>
+            </datalist>
+        </div>
+
+        <div class="preview-wrapper">
+            <div class="preview-label">Receipt preview</div>
+            <div class="bill" id="bill">
+                <div class="bill-cancelled" id="bill-cancelled" hidden>CANCELLED</div>
+                <header class="bill-header">
+                    <div class="logo-placeholder" th:if="${shop.logoOnBill}">
+                        <img th:if="${hasLogo}" th:src="@{/shop-logo}" th:alt="${shop.shopName} + ' Logo'" class="logo-image">
+                        <img th:unless="${hasLogo}" th:src="@{/img/svt-receipt.svg}" th:alt="${shop.shopName} + ' Logo'" class="logo-image">
+                    </div>
+                    <div class="shop-name" th:text="${#strings.toUpperCase(shop.shopName)}">SHOP</div>
+                    <div class="shop-subtitle" th:if="${shop.receiptSubtitle}" th:text="${shop.receiptSubtitle}"></div>
+                    <div class="shop-address">
+                        <div class="pre" th:if="${shop.address}" th:text="${#strings.toUpperCase(shop.address)}"></div>
+                        <div th:if="${shop.mobile}" th:text="'WhatsApp : ' + ${shop.mobile}"></div>
+                    </div>
+                    <div class="gstin" th:if="${shop.gstin}" th:text="'GSTIN : ' + ${shop.gstin}"></div>
+                    <div class="bill-title" th:if="${shop.receiptTitle}" th:text="${shop.receiptTitle}"></div>
+                </header>
+
+                <section class="bill-meta">
+                    <div class="meta-row">
+                        <span>Bill No : <span id="meta-billNo"></span></span>
+                        <span>Date : <span id="meta-billDate"></span></span>
+                    </div>
+                    <div class="meta-row"><span>Customer Name : <span id="meta-customerName">Cash</span></span></div>
+                    <div class="meta-row"><span>Cust Mobile No : <span id="meta-custMobile"></span></span></div>
+                </section>
+
+                <section class="bill-items">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th class="col-item">Item</th>
+                            <th class="col-qty">Qty.</th>
+                            <th class="col-mrp">MRP</th>
+                            <th class="col-rate">RATE</th>
+                            <th class="col-amt">Amt.</th>
+                        </tr>
+                        </thead>
+                        <tbody id="bill-items-body"></tbody>
+                        <tfoot>
+                        <tr class="totals-row">
+                            <td class="text-right">Total</td>
+                            <td id="bill-total-qty" class="col-qty"></td>
+                            <td></td>
+                            <td></td>
+                            <td id="bill-total-sale" class="col-amt"></td>
+                        </tr>
+                        </tfoot>
+                    </table>
+                </section>
+
+                <section class="bill-amount-words">Rupees <span id="amount-in-words"></span> Only</section>
+
+                <section class="bill-summary">
+                    <div>Total Sale : <span id="summary-total-sale"></span></div>
+                    <div>Total Savings : <span id="summary-total-savings"></span></div>
+                    <div>Net Payable : <span id="summary-net-payable"></span></div>
+                    <div>TIME : <span id="summary-time"></span></div>
+                </section>
+
+                <section class="bill-declaration" th:if="${shop.receiptDeclaration != null or shop.instagram != null}">
+                    <div class="declaration-title" th:if="${shop.receiptDeclaration}">DECLARATION</div>
+                    <div class="pre" th:if="${shop.receiptDeclaration}" th:text="${shop.receiptDeclaration}"></div>
+                    <div class="instagram" th:if="${shop.instagram}" th:text="'Instagram ID: ' + ${shop.instagram}"></div>
+                </section>
+
+                <section class="bill-qr" th:if="${shop.upiId}">
+                    <div id="qrcode" class="qr-placeholder"></div>
+                </section>
+
+                <footer class="bill-footer" th:if="${shop.receiptFooter}" th:text="${shop.receiptFooter}"></footer>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/qrcode.min.js}"></script>
+<script th:src="@{/js/local-bill.js}"></script>
+</body>
+</html>

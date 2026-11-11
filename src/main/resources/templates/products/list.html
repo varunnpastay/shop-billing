@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Items')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="page-head">
+        <h1>Items / Services</h1>
+        <a class="btn primary" th:href="@{/products/new}">+ Add Item</a>
+    </div>
+    <form class="card filters" th:action="@{/products}" method="get">
+        <label>Search <input name="q" th:value="${q}" placeholder="Item name"></label>
+        <button class="btn">Search</button>
+    </form>
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Name</th><th>HSN/SAC</th><th>Unit</th><th class="r">Rate</th><th class="r">MRP</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="p : ${products}">
+                <td th:text="${p.name}"></td>
+                <td th:text="${p.hsn}"></td>
+                <td th:text="${p.unit}"></td>
+                <td class="r" th:text="${p.rate != null} ? ${#numbers.formatDecimal(p.rate, 1, 'COMMA', 2, 'POINT')} : ''"></td>
+                <td class="r" th:text="${p.mrp != null} ? ${#numbers.formatDecimal(p.mrp, 1, 'COMMA', 2, 'POINT')} : ''"></td>
+                <td class="r nowrap">
+                    <a th:href="@{/products/{id}/edit(id=${p.id})}">Edit</a> ·
+                    <form class="inline" th:action="@{/products/{id}/delete(id=${p.id})}" method="post"
+                          onsubmit="return confirm('Delete this item?')">
+                        <button class="link danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(products)}"><td colspan="6" class="muted">No items yet.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# OPTIONAL. Without a db.properties file the app uses its built-in database (./data folder) with automatic daily
+# backups – that is the simplest setup for one shop.
+#
+# To use PostgreSQL instead: copy this file to db.properties (same folder you start the app from), create the
+# database once with:   psql -U postgres -c "CREATE DATABASE shop_billing;"
+# and fill in your password below.
+DB_URL=jdbc:postgresql://localhost:5432/shop_billing
+DB_USERNAME=postgres
+DB_PASSWORD=change-me
+
+# Change the port if another program already uses 8080:
+# PORT=8081

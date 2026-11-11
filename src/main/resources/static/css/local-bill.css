@@ -1,0 +1,168 @@
+/* Local (retail) billing page. Entry panel uses the navy app theme; the receipt itself (.bill) stays black on white
+   so it prints the same as the old Smart Billing receipt. Scoped under .sb so it does not affect the rest of the app. */
+body.sb-body { background: var(--bg); }
+
+.sb, .sb *, .sb *::before, .sb *::after { box-sizing: border-box; }
+.sb { font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif; color: var(--text); }
+
+.sb .app-wrapper { display: flex; flex-wrap: wrap; gap: 20px; padding: 20px 24px; align-items: flex-start; }
+
+/* ---------------- entry panel ---------------- */
+.sb .controls {
+  flex: 1 1 420px; min-width: 300px; max-width: 760px; background: #fff; border-radius: var(--radius);
+  border: 1px solid var(--border); box-shadow: var(--shadow-sm); overflow: hidden;
+}
+.sb .controls-head {
+  background: linear-gradient(135deg, var(--navy-800), var(--navy-600)); color: #fff; padding: 14px 18px;
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.sb .controls-head h2 { margin: 0; font-size: 17px; color: #fff; }
+.sb .bill-no-chip {
+  background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25); border-radius: 999px;
+  padding: 3px 12px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent);
+}
+.sb .controls-body { padding: 16px 18px 18px; }
+.sb .controls h3 {
+  margin: 18px 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+}
+
+.sb .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.sb .field-row { display: flex; flex-direction: column; gap: 4px; margin: 0; }
+.sb .field-row label { font-size: 12px; font-weight: 600; color: var(--muted); margin: 0; display: block; }
+.sb .field-row input, .sb .field-row select {
+  width: 100%; padding: 8px 10px; font-size: 14px; border-radius: 8px; border: 1px solid var(--input-border);
+}
+.sb .field-row.inline { flex-direction: row; align-items: center; gap: 8px; }
+.sb .field-row.inline label { flex: 0 0 auto; }
+.sb .field-row.inline input, .sb .field-row.inline select { flex: 1; width: auto; }
+
+/* item entry table */
+.sb .items-input {
+  width: 100%; border-collapse: separate; border-spacing: 0; margin-bottom: 8px; font-size: 13px;
+  border: 1px solid var(--border); border-radius: 8px; overflow: hidden;
+}
+.sb .items-input th {
+  background: var(--navy-50); color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+  padding: 7px 8px; text-align: left; border-bottom: 1px solid var(--border);
+}
+.sb .items-input td { padding: 3px 4px; border-bottom: 1px solid var(--border); }
+.sb .items-input tbody tr:last-child td { border-bottom: 0; }
+.sb .items-input.entry th:nth-child(2),
+.sb .items-input.entry th:nth-child(3), .sb .items-input.entry th:nth-child(4) { width: 17%; }
+.sb .items-input.entry th:nth-child(5) { width: 40px; }
+.sb .items-input input {
+  width: 100%; border: 1px solid transparent; padding: 6px 7px; font-size: 13.5px; border-radius: 6px; background: transparent;
+}
+.sb .items-input input:hover { border-color: var(--border); }
+.sb .items-input input:focus {
+  outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(31,70,130,.15); background: #fff;
+}
+.sb .items-input .remove-row { padding: 4px 9px; background: transparent; border: 0; color: var(--danger); font-weight: 700; }
+.sb .items-input .remove-row:hover { background: var(--danger-soft); }
+
+/* buttons */
+.sb button {
+  margin: 0; padding: 9px 14px; font: inherit; font-size: 14px; font-weight: 600; border-radius: 8px;
+  border: 1px solid var(--input-border); cursor: pointer; background: #fff; color: var(--navy-800);
+}
+.sb button:hover { background: var(--navy-50); }
+.sb #add-row-btn { background: transparent; border-style: dashed; color: var(--primary); width: 100%; }
+.sb #add-row-btn:hover { background: var(--primary-soft); }
+.sb .action-row { display: flex; gap: 10px; margin-top: 14px; }
+.sb #print-btn { background: var(--primary); border-color: var(--primary); color: #fff; flex: 2; padding: 12px; font-size: 15px; }
+.sb #print-btn:hover { background: var(--primary-dark); }
+.sb #new-bill-btn { background: var(--accent); border-color: var(--accent); color: var(--navy-950); flex: 1; padding: 12px; }
+.sb #new-bill-btn:hover { background: var(--accent-dark); }
+.sb button:disabled { opacity: .5; cursor: not-allowed; }
+
+/* totals strip */
+.sb .totals-box {
+  margin-top: 14px; border-radius: 10px; background: var(--navy-50); border: 1px solid var(--border);
+  display: grid; grid-template-columns: repeat(3, 1fr); overflow: hidden;
+}
+.sb .totals-box .field-row { padding: 10px 12px; border-right: 1px solid var(--border); }
+.sb .totals-box .field-row:last-child { border-right: 0; background: var(--navy-800); }
+.sb .totals-box .field-row:last-child label { color: #b9c7de; }
+.sb .totals-box input, .sb .totals-box input[readonly] {
+  border: 0; background: transparent; padding: 0; font-size: 18px; font-weight: 700; color: var(--navy-900);
+  font-variant-numeric: tabular-nums; box-shadow: none;
+}
+.sb .totals-box #totalSavings { color: var(--green); }
+.sb .totals-box .field-row:last-child input { color: #fff; font-size: 20px; }
+
+.sb .tools { margin-top: 22px; border-top: 1px solid var(--border); }
+.sb .tools button { padding: 8px 14px; }
+
+.sb .sb-msg { padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; font-weight: 500; }
+.sb .sb-msg.err { background: var(--danger-soft); color: var(--danger); }
+.sb .sb-msg.ok { background: var(--green-soft); color: var(--green); }
+.sb .sb-hint { font-size: 13px; margin: 8px 0 0; }
+.sb #report-summary { font-size: 13px; margin: 8px 0; color: var(--navy-800); font-weight: 600; }
+.sb #report-bills .items-input td { padding: 6px 8px; }
+
+/* ---------------- receipt ---------------- */
+/* Not shown on screen (the entry panel uses the full width); it is only used when printing. */
+@media screen {
+  .sb .preview-wrapper { display: none !important; }
+  .sb .controls { max-width: 900px; margin: 0 auto; }
+}
+.sb .preview-wrapper {
+  flex: 0 1 340px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  background: linear-gradient(160deg, var(--navy-800), var(--navy-950)); border-radius: var(--radius);
+  padding: 16px 16px 24px; position: sticky; top: 20px;
+}
+.sb .preview-label { color: #b9c7de; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+
+.sb .bill {
+  position: relative; background: #fff; width: 280px; min-height: 480px; padding: 12px 10px 16px; color: #111;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); font-family: "Courier New", Courier, monospace; font-size: 11px;
+}
+.sb .bill-cancelled {
+  position: absolute; top: 40%; left: 0; right: 0; text-align: center; font-size: 28px; font-weight: bold;
+  color: rgba(185, 28, 28, .45); transform: rotate(-20deg); pointer-events: none;
+}
+.sb .pre { white-space: pre-line; }
+.sb .bill-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px; }
+.sb .logo-placeholder { display: flex; justify-content: center; margin-bottom: 4px; }
+.sb .logo-image { height: 52px; width: auto; filter: grayscale(1) contrast(1.15); }  /* receipt prints black & white */
+.sb .shop-name { font-weight: 700; font-size: 12px; }
+.sb .shop-subtitle { font-size: 10px; }
+.sb .shop-address { margin-top: 2px; font-size: 9px; }
+.sb .gstin { margin-top: 3px; }
+.sb .bill-title { margin-top: 4px; font-weight: bold; text-decoration: underline; }
+.sb .bill-meta { border-bottom: 1px dashed #000; padding-bottom: 4px; margin-bottom: 4px; }
+.sb .meta-row { display: flex; justify-content: space-between; }
+.sb .bill-items table { width: 100%; border-collapse: collapse; }
+.sb .bill-items th, .sb .bill-items td { border: 1px solid #000; padding: 2px 3px; text-align: left; }
+.sb .bill-items th { font-weight: bold; }
+.sb .col-qty, .sb .col-mrp, .sb .col-rate, .sb .col-amt, .sb .text-right { text-align: right !important; }
+.sb .bill-amount-words { margin-top: 4px; border-bottom: 1px dashed #000; padding-bottom: 4px; }
+.sb .bill-summary { margin-top: 4px; border-bottom: 1px dashed #000; padding-bottom: 4px; }
+.sb .bill-summary div { display: flex; justify-content: space-between; }
+.sb #summary-net-payable { font-weight: bold; }
+.sb .bill-declaration { text-align: center; margin-top: 4px; }
+.sb .declaration-title { font-weight: bold; }
+.sb .instagram { margin-top: 3px; font-weight: bold; }
+.sb .bill-qr { display: flex; justify-content: center; margin-top: 6px; }
+.sb .qr-placeholder {
+  width: 80px; height: 80px; border: 1px solid #000; display: flex; align-items: center; justify-content: center;
+  font-size: 10px;
+}
+.sb .bill-footer { text-align: center; margin-top: 6px; font-weight: bold; }
+
+@media (max-width: 900px) {
+  .sb .app-wrapper { padding: 16px; }
+  .sb .preview-wrapper { position: static; flex-basis: 100%; }
+}
+@media (max-width: 560px) {
+  .sb .field-grid, .sb .totals-box { grid-template-columns: 1fr; }
+  .sb .totals-box .field-row { border-right: 0; border-bottom: 1px solid var(--border); }
+}
+
+@media print {
+  body.sb-body { background: #fff; padding-left: 0 !important; }
+  .topbar, .sb .controls, .sb .preview-label { display: none !important; }
+  .sb .app-wrapper { padding: 0; margin: 0; justify-content: center; }
+  .sb .preview-wrapper { background: none; padding: 0; position: static; }
+  .sb .bill { box-shadow: none; border: none; }
+}

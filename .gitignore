@@ -1,0 +1,13 @@
+target/
+data/
+*.log
+db.properties
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# shop data – never commit (customer bills, password hash)
+backups/
