@@ -49,7 +49,7 @@ class EndToEndTest {
         mvc.perform(get("/login")).andExpect(status().isOk())
                 .andExpect(content().string(not(containsString("admin123"))));
         mvc.perform(get("/img/logo.svg")).andExpect(status().isOk());
-        mvc.perform(get("/css/style.css")).andExpect(status().isOk());
+        mvc.perform(get("/css/app.css")).andExpect(status().isOk());
 
         // ---- wrong password
         mvc.perform(post("/login").param("username", "admin").param("password", "wrong"))
@@ -188,6 +188,25 @@ class EndToEndTest {
         mvc.perform(get("/bills/" + id + "/print").session(s)).andExpect(content().string(containsString("CANCELLED")));
         mvc.perform(post("/bills/" + id + "/cancel").session(s).param("value", "false"))
                 .andExpect(flash().attribute("msg", "Bill restored"));
+        // editing a paid credit bill keeps it paid
+        mvc.perform(post("/bills/save").session(s).param("id", String.valueOf(id))
+                .param("customerName", "New Buyer").param("billDate", "2026-11-02").param("billType", "CREDIT")
+                .param("taxType", "IGST").param("gstPercent", "18").param("discount", "0")
+                .param("items[0].particulars", "Cement Bag").param("items[0].qty", "1").param("items[0].rate", "100"));
+        assertTrue(billRepo.findById(id).orElseThrow().isPaid());
+
+        // a cash bill changed to credit becomes unpaid (shows under pending credit)
+        mvc.perform(post("/bills/save").session(s)
+                .param("customerName", "Walk In").param("billDate", "2026-11-03").param("billType", "CASH")
+                .param("taxType", "NONE").param("gstPercent", "0")
+                .param("items[0].particulars", "Sand").param("items[0].qty", "1").param("items[0].rate", "50"));
+        Bill cash = billRepo.findByBillNo(501L).orElseThrow();
+        assertTrue(cash.isPaid());
+        mvc.perform(post("/bills/save").session(s).param("id", String.valueOf(cash.getId()))
+                .param("customerName", "Walk In").param("billDate", "2026-11-03").param("billType", "CREDIT")
+                .param("taxType", "NONE").param("gstPercent", "0")
+                .param("items[0].particulars", "Sand").param("items[0].qty", "1").param("items[0].rate", "50"));
+        assertFalse(billRepo.findById(cash.getId()).orElseThrow().isPaid());
 
         // reports and CSV
         mvc.perform(get("/reports").param("from", "2026-11-01").param("to", "2026-11-30").session(s))
@@ -240,7 +259,7 @@ class EndToEndTest {
         mvc.perform(get("/local/api/report").param("date", today).session(s))
                 .andExpect(jsonPath("$[0].customerName").value("Walk In"));
         mvc.perform(get("/local").param("q", "walk").session(s)).andExpect(content().string(containsString("9000000001")));
-        mvc.perform(get("/").session(s)).andExpect(content().string(containsString("Today – Local")))
+        mvc.perform(get("/").session(s)).andExpect(content().string(containsString("today-split")))
                 .andExpect(content().string(containsString("Walk In")));
         mvc.perform(get("/reports").param("from", today).param("to", today).session(s))
                 .andExpect(content().string(containsString("Walk In")));
@@ -260,7 +279,7 @@ class EndToEndTest {
         mvc.perform(post("/settings/logo/delete").session(s)).andExpect(flash().attribute("msg", "Logo removed"));
         mvc.perform(get("/shop-logo")).andExpect(status().isNotFound());
         mvc.perform(get("/bills/" + id + "/print").session(s)).andExpect(content().string(not(containsString("src=\"/shop-logo\""))))
-                .andExpect(content().string(containsString("/img/brand-lakshmi.jpg")));   // default Lakshmi image when no logo uploaded
+                .andExpect(content().string(matchesPattern("(?s).*/img/brand-lakshmi(-[0-9a-f]{32})?\\.jpg.*")));   // default Lakshmi image when no logo uploaded
 
         long custId = customerRepo.findFirstByNameIgnoreCase("Ravi Constructions").orElseThrow().getId();
         mvc.perform(post("/customers/" + custId + "/delete").session(s)).andExpect(flash().attribute("msg", "Customer deleted"));

@@ -88,6 +88,7 @@ public class LocalBillController {
     public record ItemView(String name, BigDecimal qty, BigDecimal mrp, BigDecimal rate, BigDecimal amt) {}
 
     public record BillView(Long id, String billNo, String billDate, String time, String customerName, String custMobile,
+                           String paymentMode,
                            boolean cancelled, List<ItemView> items,
                            BigDecimal totalSale, BigDecimal totalSavings, BigDecimal netPayable) {}
 
@@ -96,7 +97,7 @@ public class LocalBillController {
     static BillView view(LocalBill b) {
         return new BillView(b.getId(), b.getBillNo(), String.valueOf(b.getBillDate()),
                 b.getCreatedAt() == null ? "" : b.getCreatedAt().format(TIME),
-                b.getCustomerName(), b.getCustMobile(), b.isCancelled(),
+                b.getCustomerName(), b.getCustMobile(), b.getPaymentMode() == null ? "CASH" : b.getPaymentMode(), b.isCancelled(),
                 b.getItems().stream().map(LocalBillController::itemView).toList(),
                 b.getTotalSale(), b.getTotalSavings(), b.getNetPayable());
     }

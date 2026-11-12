@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Accounts')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="page-head">
+        <h1>Accounts &amp; Profit</h1>
+        <div class="btn-row">
+            <a class="btn" th:href="@{/expenses}">+ Expense</a>
+            <button class="btn" onclick="window.print()">Print / PDF</button>
+        </div>
+    </div>
+    <p class="print-only" th:text="${shop.shopName} + ' – ' + ${#temporals.format(from, 'dd/MM/yyyy')} + ' to ' + ${#temporals.format(to, 'dd/MM/yyyy')}"></p>
+
+    <form class="card filters" th:action="@{/accounts}" method="get">
+        <label>From <input type="date" name="from" th:value="${from}"></label>
+        <label>To <input type="date" name="to" th:value="${to}"></label>
+        <button class="btn">Show</button>
+        <a class="btn ghost" th:href="@{/accounts(from=${#temporals.createToday()},to=${#temporals.createToday()})}">Today</a>
+    </form>
+
+    <div class="stats">
+        <div class="stat hero"><span class="muted">Net profit (estimated)</span>
+            <strong th:text="'₹ ' + ${@money.inr(s.netProfit)}"></strong>
+            <span class="small">after cost of goods and expenses</span></div>
+        <div class="stat"><span class="muted">Money received</span><strong class="pos" th:text="'₹ ' + ${@money.inr(s.totalIn())}"></strong></div>
+        <div class="stat"><span class="muted">Money paid out</span><strong class="neg" th:text="'₹ ' + ${@money.inr(s.totalOut())}"></strong></div>
+        <div class="stat warn"><span class="muted">To collect (customers)</span>
+            <strong th:text="'₹ ' + ${@money.inr(receivables)}"></strong>
+            <a class="small" th:href="@{/customers/outstanding}">Payment reminders →</a></div>
+        <div class="stat warn"><span class="muted">To pay (suppliers)</span>
+            <strong th:text="'₹ ' + ${@money.inr(payables)}"></strong>
+            <a class="small" th:href="@{/suppliers}">Suppliers →</a></div>
+    </div>
+
+    <div class="split">
+        <div class="card" th:fragment="pl">
+            <h3>Profit &amp; Loss</h3>
+            <table class="table pl-table">
+                <tbody>
+                <tr><td>Wholesale sales (without GST)</td><td class="r" th:text="${@money.inr(s.wholesaleSales)}"></td></tr>
+                <tr><td>Local sales</td><td class="r" th:text="${@money.inr(s.localSales)}"></td></tr>
+                <tr><td>Less: returns / refunds</td><td class="r neg" th:text="'- ' + ${@money.inr(s.returns)}"></td></tr>
+                <tr class="total"><td>Net sales</td><td class="r" th:text="${@money.inr(s.netSales)}"></td></tr>
+                <tr><td>Less: cost of goods sold</td><td class="r neg" th:text="'- ' + ${@money.inr(s.cogs)}"></td></tr>
+                <tr class="total"><td>Gross profit</td><td class="r" th:text="${@money.inr(s.grossProfit)}"></td></tr>
+                <tr><td>Less: expenses</td><td class="r neg" th:text="'- ' + ${@money.inr(s.expenses)}"></td></tr>
+                <tr class="total big"><td>Net profit (estimated)</td>
+                    <td class="r" th:classappend="${s.netProfit.signum() < 0} ? 'neg' : 'pos'" th:text="${@money.inr(s.netProfit)}"></td></tr>
+                <tr><td class="muted">GST collected (to be paid to govt.)</td><td class="r muted" th:text="${@money.inr(s.wholesaleGst)}"></td></tr>
+                <tr><td class="muted">Stock purchased in this period</td><td class="r muted" th:text="${@money.inr(s.purchases)}"></td></tr>
+                </tbody>
+            </table>
+            <p class="small muted" th:if="${s.itemsWithoutCost > 0}"
+               th:text="${s.itemsWithoutCost} + ' sold item name(s) have no purchase price in Items, so their cost is not counted. Add the purchase price to make profit exact.'"></p>
+        </div>
+
+        <div>
+            <div class="card">
+                <h3>Cash &amp; digital</h3>
+                <table class="table">
+                    <thead><tr><th>Mode</th><th class="r">Received</th><th class="r">Paid out</th><th class="r">Net</th></tr></thead>
+                    <tbody>
+                    <tr th:each="m : ${s.moneyIn}">
+                        <td th:text="${m.key == 'BANK' ? 'Bank transfer' : (m.key == 'UPI' ? 'UPI' : 'Cash')}"></td>
+                        <td class="r pos" th:text="${@money.inr(m.value)}"></td>
+                        <td class="r neg" th:text="${@money.inr(s.moneyOut.get(m.key))}"></td>
+                        <td class="r"><b th:text="${@money.inr(m.value.subtract(s.moneyOut.get(m.key)))}"></b></td>
+                    </tr>
+                    </tbody>
+                    <tfoot><tr><th>Total</th><th class="r" th:text="${@money.inr(s.totalIn())}"></th>
+                        <th class="r" th:text="${@money.inr(s.totalOut())}"></th>
+                        <th class="r" th:text="${@money.inr(s.totalIn().subtract(s.totalOut()))}"></th></tr></tfoot>
+                </table>
+                <p class="small muted">Received = cash bills, local bills and credit payments. Paid out = expenses, supplier
+                    payments and refunds.</p>
+            </div>
+            <div class="card">
+                <h3>Expenses by type</h3>
+                <ul class="mini-list">
+                    <li th:each="e : ${s.expenseByCategory}"><span th:text="${e.key}"></span><b th:text="${@money.inr(e.value)}"></b></li>
+                    <li th:if="${s.expenseByCategory.isEmpty()}" class="muted">No expenses in this period.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+        <h3>Daily income &amp; expense</h3>
+        <table class="table">
+            <thead><tr><th>Date</th><th class="r">Bills</th><th class="r">Sales</th><th class="r">Received</th>
+                <th class="r">Expenses</th><th class="r">Paid out</th><th class="r">Net cash</th></tr></thead>
+            <tbody>
+            <tr th:each="d : ${days}">
+                <td th:text="${d.label}"></td>
+                <td class="r" th:text="${d.bills}"></td>
+                <td class="r" th:text="${@money.inr(d.total())}"></td>
+                <td class="r pos" th:text="${@money.inr(d.received)}"></td>
+                <td class="r" th:text="${@money.inr(d.expenses)}"></td>
+                <td class="r" th:text="${@money.inr(d.paidOut)}"></td>
+                <td class="r"><b th:classappend="${d.net().signum() < 0} ? 'neg'" th:text="${@money.inr(d.net())}"></b></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(days)}"><td colspan="7" class="muted">Nothing in this period.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

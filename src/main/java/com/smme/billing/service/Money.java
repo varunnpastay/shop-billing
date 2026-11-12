@@ -25,6 +25,12 @@ public class Money {
         return String.format("%02d", paise);
     }
 
+    /** 120790.5 -> "1,20,790.50" (null -> "0.00"). */
+    public String inr(BigDecimal v) {
+        BigDecimal a = (v == null ? BigDecimal.ZERO : v).setScale(2, RoundingMode.HALF_UP);
+        return rs(a) + "." + ps(a);
+    }
+
     /** Whole numbers without trailing zeros: 110.000 -> "110", 2.5 -> "2.5". */
     public String qty(BigDecimal v) {
         return v == null ? "" : v.stripTrailingZeros().toPlainString();

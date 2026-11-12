@@ -23,4 +23,6 @@ public interface LocalBillRepository extends JpaRepository<LocalBill, Long> {
     List<LocalBill> findByBillDateBetweenAndCancelledFalseOrderByIdAsc(LocalDate from, LocalDate to);
 
     List<LocalBill> findByBillDateBetweenOrderByIdDesc(LocalDate from, LocalDate to);
+
+    List<LocalBill> findTop100ByCustomerNameIgnoreCaseOrCustMobileOrderByIdDesc(String customerName, String custMobile);
 }

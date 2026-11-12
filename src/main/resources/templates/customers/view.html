@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head(${customer.name})}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="page-head">
+        <div>
+            <h1><span th:text="${customer.name}"></span>
+                <span class="badge navy" th:if="${customer.customerType == 'WHOLESALE'}">Wholesale</span>
+                <span class="badge grey" th:if="${customer.customerType == 'RETAIL'}">Retail</span></h1>
+            <div class="small muted"><span th:text="${customer.phone}"></span>
+                <span th:if="${customer.gstin}" th:text="' · GSTIN ' + ${customer.gstin}"></span>
+                <span th:if="${customer.address}" th:text="' · ' + ${customer.address}"></span></div>
+        </div>
+        <div class="btn-row">
+            <a class="btn primary" th:href="@{/bills/new}">+ Wholesale Bill</a>
+            <a class="btn" th:href="@{/customers/{id}/edit(id=${customer.id})}">Edit</a>
+        </div>
+    </div>
+
+    <div class="stats">
+        <div class="stat warn"><span class="muted">Outstanding</span>
+            <strong th:text="'₹ ' + ${@money.inr(outstanding)}"></strong>
+            <a class="small wa" th:if="${whatsapp}" th:href="${whatsapp}" target="_blank" rel="noopener">Send WhatsApp reminder →</a></div>
+        <div class="stat"><span class="muted">Wholesale purchases</span>
+            <strong th:text="'₹ ' + ${@money.inr(totalBought)}"></strong>
+            <span class="small muted" th:text="${#lists.size(bills)} + ' bills'"></span></div>
+        <div class="stat"><span class="muted">Local bills</span><strong th:text="${#lists.size(localBills)}"></strong></div>
+    </div>
+
+    <div class="card" th:if="${outstanding.signum() > 0}">
+        <h3>Receive payment</h3>
+        <p class="small muted">The amount is set against the oldest unpaid credit bills first.</p>
+        <form class="form-inline" th:action="@{/customers/{id}/receive(id=${customer.id})}" method="post">
+            <label>Date <input type="date" name="date" th:value="${today}" required></label>
+            <label>Amount (₹) <input type="number" step="0.01" min="0.01" th:max="${outstanding}" name="amount" required></label>
+            <label>Received by <select th:replace="~{fragments :: modes}"></select></label>
+            <label style="flex:2 1 200px">Note <input name="note" maxlength="200" placeholder="Cheque no, UTR…"></label>
+            <button class="btn primary">Save payment</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h3>Wholesale bills</h3>
+        <table class="table">
+            <thead><tr><th>Bill No</th><th>Date</th><th>Type</th><th class="r">Amount</th><th class="r">Balance</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="b : ${bills}" th:classappend="${b.cancelled} ? 'cancelled'">
+                <td th:text="${b.billNo}"></td>
+                <td th:text="${#temporals.format(b.billDate, 'dd/MM/yyyy')}"></td>
+                <td th:text="${b.billType}"></td>
+                <td class="r" th:text="${@money.inr(b.grandTotal)}"></td>
+                <td class="r" th:text="${b.balance.signum() > 0} ? ${@money.inr(b.balance)} : ''"></td>
+                <td><span th:replace="~{fragments :: status(${b})}"></span></td>
+                <td class="r"><a class="btn sm" th:href="@{/bills/{id}(id=${b.id})}">Open</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(bills)}"><td colspan="7" class="muted">No wholesale bills.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="split">
+        <div class="card">
+            <h3>Payments received</h3>
+            <table class="table">
+                <thead><tr><th>Date</th><th>Mode</th><th>Note</th><th class="r">Amount</th></tr></thead>
+                <tbody>
+                <tr th:each="p : ${receipts}">
+                    <td th:text="${#temporals.format(p.payDate, 'dd/MM/yyyy')}"></td>
+                    <td th:text="${p.mode}"></td>
+                    <td class="small" th:text="${p.note}"></td>
+                    <td class="r" th:text="${@money.inr(p.amount)}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(receipts)}"><td colspan="4" class="muted">No payments recorded.</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card">
+            <h3>Local bills</h3>
+            <table class="table">
+                <thead><tr><th>Bill No</th><th>Date</th><th class="r">Amount</th><th></th></tr></thead>
+                <tbody>
+                <tr th:each="b : ${localBills}" th:classappend="${b.cancelled} ? 'cancelled'">
+                    <td th:text="${b.billNo}"></td>
+                    <td th:text="${#temporals.format(b.billDate, 'dd/MM/yyyy')}"></td>
+                    <td class="r" th:text="${@money.inr(b.netPayable)}"></td>
+                    <td class="r"><a class="btn sm" th:href="@{/local/{id}(id=${b.id})}">Open</a></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(localBills)}"><td colspan="4" class="muted">No local bills.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+</body>
+</html>

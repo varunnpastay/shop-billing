@@ -6,13 +6,18 @@
 <main class="container">
     <div th:replace="~{fragments :: flash}"></div>
     <div class="page-head">
-        <h1>Bill #<span th:text="${bill.billNo}"></span>
+        <h1>Wholesale Bill #<span th:text="${bill.billNo}"></span>
             <span th:replace="~{fragments :: status(${bill})}"></span></h1>
-        <div class="btn-row">
-            <a class="btn primary" th:href="@{/bills/{id}/print(id=${bill.id})}" target="_blank">Print A4</a>
-            <a class="btn" th:href="@{/bills/{id}/print(id=${bill.id},size='A5')}" target="_blank">Print A5</a>
-            <a class="btn" th:href="@{/bills/{id}/print(id=${bill.id},copy='DUPLICATE')}" target="_blank">Duplicate Copy</a>
-            <a class="btn" th:if="${!bill.cancelled}" th:href="@{/bills/{id}/edit(id=${bill.id})}">Edit</a>
+        <a class="btn" th:href="@{/bills}">← All Wholesale Bills</a>
+    </div>
+
+    <div class="print-bar">
+        <a class="btn primary big" th:href="@{/bills/{id}/print(id=${bill.id})}" target="_blank">
+            <svg th:replace="~{fragments :: printer}"></svg> Print Bill</a>
+        <div class="more">
+            <a class="btn" th:href="@{/bills/{id}/print(id=${bill.id},size='A5')}" target="_blank">Print Small (A5)</a>
+            <a class="btn" th:href="@{/bills/{id}/print(id=${bill.id},copy='DUPLICATE')}" target="_blank">Print Duplicate Copy</a>
+            <a class="btn" th:if="${!bill.cancelled}" th:href="@{/bills/{id}/edit(id=${bill.id})}">Edit Bill</a>
             <a class="btn" th:href="@{/bills/{id}/copy(id=${bill.id})}">Copy to New Bill</a>
         </div>
     </div>
@@ -22,7 +27,7 @@
         <div class="span-2"><span class="muted">Customer</span><br><b th:text="${bill.customerName}"></b>
             <div class="small" th:text="${bill.customerAddress}"></div>
             <div class="small" th:if="${bill.customerGstin}" th:text="'GSTIN: ' + ${bill.customerGstin}"></div></div>
-        <div><span class="muted">Type</span><br><b th:text="${bill.billType}"></b><div class="small" th:if="${bill.byName}" th:text="'By: ' + ${bill.byName}"></div></div>
+        <div><span class="muted">Type</span><br><b th:text="${bill.billType}"></b> <span class="small muted" th:text="'· ' + ${bill.paymentMode ?: 'CASH'}"></span><div class="small" th:if="${bill.byName}" th:text="'By: ' + ${bill.byName}"></div></div>
     </div>
 
     <div class="card">
@@ -45,6 +50,10 @@
             <tr th:if="${bill.taxType == 'IGST'}"><td colspan="5" class="r">IGST</td>
                 <td class="r" th:text="${#numbers.formatDecimal(bill.igst, 1, 'COMMA', 2, 'POINT')}"></td></tr>
             <tr><th colspan="5" class="r">Grand Total</th><th class="r" th:text="'₹ ' + ${#numbers.formatDecimal(bill.grandTotal, 1, 'COMMA', 2, 'POINT')}"></th></tr>
+            <tr th:if="${!bill.paid and bill.amountReceived != null and bill.amountReceived.signum() > 0}">
+                <td colspan="5" class="r">Received so far</td><td class="r pos" th:text="${@money.inr(bill.amountReceived)}"></td></tr>
+            <tr th:if="${bill.balance.signum() > 0}">
+                <th colspan="5" class="r neg">Balance due</th><th class="r neg" th:text="'₹ ' + ${@money.inr(bill.balance)}"></th></tr>
             </tfoot>
         </table>
         <p class="small muted" th:if="${bill.notes}" th:text="'Notes: ' + ${bill.notes}"></p>

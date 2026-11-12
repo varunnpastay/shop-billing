@@ -11,3 +11,7 @@ db.properties
 
 # shop data – never commit (customer bills, password hash)
 backups/
+data_before_restore_*/
+
+# Tailwind build tools (the built css/app.css is committed)
+ui/node_modules/

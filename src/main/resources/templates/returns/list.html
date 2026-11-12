@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Returns')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="page-head"><h1>Sales Returns</h1></div>
+
+    <div class="card">
+        <h3>Goods returned by a customer</h3>
+        <p class="small muted">The item goes back into stock and the refund is taken off sales. To cancel a whole bill, use
+            “Cancel Bill” on the bill instead.</p>
+        <form class="form-inline" th:action="@{/returns}" method="post">
+            <label>Date <input type="date" name="date" th:value="${today}" required></label>
+            <label>Bill no <input name="billRef" maxlength="30" placeholder="154 or 0012/2026"></label>
+            <label>Customer <input name="customerName" maxlength="150"></label>
+            <label style="flex:2 1 200px">Item * <input name="productName" list="productList" maxlength="200" required autocomplete="off"></label>
+            <label>Qty * <input type="number" step="0.001" min="0.001" name="qty" required></label>
+            <label>Refund (₹) * <input type="number" step="0.01" min="0" name="refund" required placeholder="0 if exchanged"></label>
+            <label>Refund by <select th:replace="~{fragments :: modes}"></select></label>
+            <label style="flex:2 1 200px">Reason <input name="reason" maxlength="200" placeholder="Colour change, damage…"></label>
+            <button class="btn primary">Save return</button>
+        </form>
+        <datalist id="productList"><option th:each="p : ${products}" th:value="${p.name}"></option></datalist>
+    </div>
+
+    <form class="card filters" th:action="@{/returns}" method="get">
+        <label>From <input type="date" name="from" th:value="${from}"></label>
+        <label>To <input type="date" name="to" th:value="${to}"></label>
+        <button class="btn">Show</button>
+    </form>
+
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Date</th><th>Bill</th><th>Customer</th><th>Item</th><th class="r">Qty</th><th>Reason</th><th class="r">Refund</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${returns}">
+                <td th:text="${#temporals.format(r.returnDate, 'dd/MM/yyyy')}"></td>
+                <td th:text="${r.billRef}"></td>
+                <td th:text="${r.customerName}"></td>
+                <td th:text="${r.productName}"></td>
+                <td class="r" th:text="${@money.qty(r.qty)}"></td>
+                <td class="small" th:text="${r.reason}"></td>
+                <td class="r" th:text="${@money.inr(r.refund)} + ' ' + ${r.mode}"></td>
+                <td class="r"><form class="inline" th:action="@{/returns/{id}/delete(id=${r.id})}" method="post"
+                                    onsubmit="return confirm('Delete this return? The quantity will be taken out of stock again.')">
+                    <button class="btn sm danger">Delete</button></form></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(returns)}"><td colspan="8" class="muted">No returns in this period.</td></tr>
+            </tbody>
+            <tfoot th:if="${!#lists.isEmpty(returns)}">
+            <tr><th colspan="6" class="r">Total refunds</th><th class="r" th:text="'₹ ' + ${@money.inr(total)}"></th><th></th></tr>
+            </tfoot>
+        </table>
+    </div>
+</main>
+</body>
+</html>

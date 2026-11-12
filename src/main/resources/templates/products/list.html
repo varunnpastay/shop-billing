@@ -6,33 +6,66 @@
 <main class="container">
     <div th:replace="~{fragments :: flash}"></div>
     <div class="page-head">
-        <h1>Items / Services</h1>
-        <a class="btn primary" th:href="@{/products/new}">+ Add Item</a>
+        <h1>Items &amp; Stock</h1>
+        <div class="btn-row">
+            <a class="btn" th:href="@{/purchases/new}">+ Purchase (stock in)</a>
+            <a class="btn primary" th:href="@{/products/new}">+ Add Item</a>
+        </div>
     </div>
+
+    <div class="alert warn-box" th:if="${lowCount > 0 and !low}">
+        <b th:text="${lowCount} + (${lowCount} == 1 ? ' item is' : ' items are') + ' low in stock.'"></b>
+        <a th:href="@{/products(low=true)}">Show them →</a>
+    </div>
+
     <form class="card filters" th:action="@{/products}" method="get">
-        <label>Search <input name="q" th:value="${q}" placeholder="Item name"></label>
+        <label>Search <input name="q" th:value="${q}" placeholder="Name, code, category, fabric, colour or barcode" autofocus></label>
+        <label>Category
+            <select name="category">
+                <option value="">All</option>
+                <option th:each="c : ${categories}" th:value="${c}" th:text="${c}" th:selected="${c == category}"></option>
+            </select>
+        </label>
+        <label class="check"><input type="checkbox" name="low" value="true" th:checked="${low}"> Low stock only</label>
         <button class="btn">Search</button>
     </form>
+
     <div class="card">
         <table class="table">
-            <thead><tr><th>Name</th><th>HSN/SAC</th><th>Unit</th><th class="r">Rate</th><th class="r">MRP</th><th></th></tr></thead>
+            <thead><tr><th></th><th>Item</th><th>Category</th><th class="r">Purchase</th><th class="r">Selling</th>
+                <th class="r">Wholesale</th><th class="r">MRP</th><th class="r">Stock</th><th class="r">Value</th><th></th></tr></thead>
             <tbody>
             <tr th:each="p : ${products}">
-                <td th:text="${p.name}"></td>
-                <td th:text="${p.hsn}"></td>
-                <td th:text="${p.unit}"></td>
-                <td class="r" th:text="${p.rate != null} ? ${#numbers.formatDecimal(p.rate, 1, 'COMMA', 2, 'POINT')} : ''"></td>
-                <td class="r" th:text="${p.mrp != null} ? ${#numbers.formatDecimal(p.mrp, 1, 'COMMA', 2, 'POINT')} : ''"></td>
+                <td style="width:56px">
+                    <img th:if="${p.hasImage}" class="thumb" th:src="@{/products/{id}/image(id=${p.id})}" alt="" loading="lazy">
+                    <div th:unless="${p.hasImage}" class="thumb none"></div>
+                </td>
+                <td><b th:text="${p.name}"></b>
+                    <div class="small muted" th:text="${p.details}"></div></td>
+                <td th:text="${p.category}"></td>
+                <td class="r" th:text="${p.purchasePrice != null} ? ${@money.inr(p.purchasePrice)} : ''"></td>
+                <td class="r" th:text="${p.rate != null} ? ${@money.inr(p.rate)} : ''"></td>
+                <td class="r" th:text="${p.wholesalePrice != null} ? ${@money.inr(p.wholesalePrice)} : ''"></td>
+                <td class="r" th:text="${p.mrp != null} ? ${@money.inr(p.mrp)} : ''"></td>
                 <td class="r nowrap">
-                    <a th:href="@{/products/{id}/edit(id=${p.id})}">Edit</a> ·
+                    <b th:text="${@money.qty(p.stock())} + ' ' + ${p.unit ?: ''}" th:classappend="${p.lowStock} ? 'neg'"></b>
+                    <span class="badge red" th:if="${p.lowStock}">Low</span>
+                    <div class="small muted" th:text="${p.bundleText}"></div>
+                </td>
+                <td class="r" th:text="${@money.inr(p.stockValue())}"></td>
+                <td class="r nowrap">
+                    <a class="btn sm" th:href="@{/products/{id}/edit(id=${p.id})}">Edit</a>
                     <form class="inline" th:action="@{/products/{id}/delete(id=${p.id})}" method="post"
                           onsubmit="return confirm('Delete this item?')">
-                        <button class="link danger">Delete</button>
+                        <button class="btn sm danger">Delete</button>
                     </form>
                 </td>
             </tr>
-            <tr th:if="${#lists.isEmpty(products)}"><td colspan="6" class="muted">No items yet.</td></tr>
+            <tr th:if="${#lists.isEmpty(products)}"><td colspan="10" class="muted">No items found.</td></tr>
             </tbody>
+            <tfoot th:if="${!#lists.isEmpty(products)}">
+            <tr><th colspan="8" class="r">Stock value (at purchase price)</th><th class="r" th:text="'₹ ' + ${@money.inr(stockValue)}"></th><th></th></tr>
+            </tfoot>
         </table>
     </div>
 </main>

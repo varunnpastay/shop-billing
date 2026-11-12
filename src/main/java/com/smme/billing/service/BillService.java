@@ -4,6 +4,7 @@ import com.smme.billing.NotFoundException;
 import com.smme.billing.model.*;
 import com.smme.billing.repository.BillRepository;
 import com.smme.billing.repository.CustomerRepository;
+import com.smme.billing.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,6 +14,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 @Service
@@ -23,11 +26,30 @@ public class BillService {
     private final BillRepository billRepo;
     private final CustomerRepository customerRepo;
     private final SettingService settingService;
+    private final StockService stock;
+    private final ActivityService activity;
+    private final PaymentRepository paymentRepo;
 
-    public BillService(BillRepository billRepo, CustomerRepository customerRepo, SettingService settingService) {
+    public static final Set<String> PAYMENT_MODES = Set.of("CASH", "UPI", "BANK");
+
+    public BillService(BillRepository billRepo, CustomerRepository customerRepo, SettingService settingService,
+                       StockService stock, ActivityService activity, PaymentRepository paymentRepo) {
         this.billRepo = billRepo;
         this.customerRepo = customerRepo;
         this.settingService = settingService;
+        this.stock = stock;
+        this.activity = activity;
+        this.paymentRepo = paymentRepo;
+    }
+
+    public static String mode(String m) {
+        return m != null && PAYMENT_MODES.contains(m) ? m : "CASH";
+    }
+
+    static Map<String, BigDecimal> qty(Bill b) {
+        Map<String, BigDecimal> m = StockService.totals();
+        for (BillItem i : b.getItems()) StockService.add(m, i.getParticulars(), i.getQty());
+        return m;
     }
 
     /** A bill the user tried to save is not valid; the message is shown on the form. */
@@ -60,6 +82,7 @@ public class BillService {
         b.setGstPercent(old.getGstPercent());
         b.setDiscount(old.getDiscount());
         b.setByName(old.getByName());
+        b.setPaymentMode(old.getPaymentMode());
         for (BillItem oi : old.getItems()) {
             BillItem i = new BillItem();
             i.setParticulars(oi.getParticulars());
@@ -86,6 +109,7 @@ public class BillService {
         if (form.getId() != null) {
             bill = get(form.getId());
             if (bill.isCancelled()) throw new InvalidBillException("A cancelled bill cannot be edited. Restore it first.");
+            stock.apply(qty(bill), +1);   // put the old lines back; the new lines are taken out below
         } else {
             bill = new Bill();
             bill.setCreatedAt(LocalDateTime.now());
@@ -97,6 +121,7 @@ public class BillService {
             settingService.saveRaw(s);
         }
 
+        boolean wasCredit = form.getId() != null && "CREDIT".equals(bill.getBillType());
         bill.setBillDate(form.getBillDate() != null ? form.getBillDate() : LocalDate.now());
         bill.setCustomerName(trim(form.getCustomerName()));
         bill.setCustomerAddress(trim(form.getCustomerAddress()));
@@ -112,9 +137,10 @@ public class BillService {
         bill.setDiscount(nz(form.getDiscount()));
         bill.setNotes(trim(form.getNotes()));
         bill.setByName(trim(form.getByName()));
+        bill.setPaymentMode(mode(form.getPaymentMode()));
 
         if ("CREDIT".equals(bill.getBillType())) {
-            if (form.getId() == null) {
+            if (!wasCredit) {   // new credit bill, or a cash bill changed to credit: money is still to come
                 bill.setPaid(false);
                 bill.setPaidDate(null);
             }
@@ -138,6 +164,7 @@ public class BillService {
         }
 
         calculate(bill);
+        stock.apply(qty(bill), -1);
         saveCustomerIfNew(bill);
         return billRepo.save(bill);
     }
@@ -211,16 +238,114 @@ public class BillService {
     public void markPaid(Long id, boolean paid) {
         Bill b = get(id);
         if (b.isCancelled()) throw new InvalidBillException("A cancelled bill cannot be marked paid or unpaid");
+        if (paid == b.isPaid()) return;
+        if (paid) {
+            // the money still due is received now: record it so it shows in accounts and the customer's payments
+            BigDecimal due = b.getBalance();
+            if ("CREDIT".equals(b.getBillType()) && due.signum() > 0) {
+                Payment p = new Payment();
+                p.setKind(Payment.CUSTOMER);
+                p.setPartyName(b.getCustomerName());
+                p.setPayDate(LocalDate.now());
+                p.setAmount(due);
+                p.setMode(mode(b.getPaymentMode()));
+                p.setNote("Bill #" + b.getBillNo() + " marked as paid");
+                p.setBillId(b.getId());
+                p.setCreatedAt(LocalDateTime.now());
+                paymentRepo.save(p);
+            }
+        } else {
+            paymentRepo.deleteAll(paymentRepo.findByBillId(b.getId()));
+        }
         b.setPaid(paid);
         b.setPaidDate(paid ? LocalDate.now() : null);
         billRepo.save(b);
+        activity.log(paid ? "Bill marked paid" : "Bill marked unpaid", "Wholesale bill #" + b.getBillNo() + " – " + b.getCustomerName());
     }
 
     @Transactional
     public void setCancelled(Long id, boolean cancelled) {
         Bill b = get(id);
+        if (b.isCancelled() == cancelled) return;
         b.setCancelled(cancelled);
+        stock.apply(qty(b), cancelled ? +1 : -1);   // cancelled goods are back in stock
         billRepo.save(b);
+        activity.log(cancelled ? "Bill cancelled" : "Bill restored",
+                "Wholesale bill #" + b.getBillNo() + " – " + b.getCustomerName() + " – ₹" + b.getGrandTotal());
+    }
+
+    // ---------------- customer credit: receipts and outstanding ----------------
+
+    /**
+     * Money received from a credit customer. It pays off the customer's oldest unpaid credit bills first;
+     * the amount cannot be more than what the customer owes.
+     */
+    @Transactional
+    public Payment receive(String customerName, BigDecimal amount, String payMode, LocalDate date, String note) {
+        if (customerName == null || customerName.isBlank()) throw new InvalidBillException("Choose the customer");
+        if (amount == null || amount.signum() <= 0) throw new InvalidBillException("Amount must be more than 0");
+        BigDecimal owed = outstanding(customerName);
+        if (amount.compareTo(owed) > 0)
+            throw new InvalidBillException("Amount is more than the outstanding ₹" + owed.toPlainString() + " of " + customerName.trim());
+        Payment p = new Payment();
+        p.setKind(Payment.CUSTOMER);
+        p.setPartyName(customerName.trim());
+        p.setPayDate(date != null ? date : LocalDate.now());
+        p.setAmount(amount);
+        p.setMode(mode(payMode));
+        p.setNote(trim(note));
+        p.setCreatedAt(LocalDateTime.now());
+        paymentRepo.save(p);
+
+        BigDecimal left = amount;
+        for (Bill b : billRepo.findByCustomerNameIgnoreCaseAndBillTypeAndPaidFalseAndCancelledFalseOrderByBillDateAscIdAsc(
+                customerName.trim(), "CREDIT")) {
+            if (left.signum() <= 0) break;
+            BigDecimal due = b.getBalance();
+            BigDecimal use = left.min(due);
+            b.setAmountReceived(nz(b.getAmountReceived()).add(use));
+            left = left.subtract(use);
+            if (b.getBalance().signum() == 0) {
+                b.setPaid(true);
+                b.setPaidDate(p.getPayDate());
+            }
+            billRepo.save(b);
+        }
+        activity.log("Payment received", customerName.trim() + " – ₹" + amount + " (" + p.getMode() + ")");
+        return p;
+    }
+
+    /** What the customer still owes on unpaid credit bills. */
+    public BigDecimal outstanding(String customerName) {
+        if (customerName == null) return BigDecimal.ZERO;
+        return sum(billRepo.findByCustomerNameIgnoreCaseAndBillTypeAndPaidFalseAndCancelledFalseOrderByBillDateAscIdAsc(
+                customerName.trim(), "CREDIT"), Bill::getBalance);
+    }
+
+    /** Outstanding of every customer with money due, highest first. */
+    public List<Map.Entry<String, BigDecimal>> outstandingByCustomer() {
+        Map<String, BigDecimal> m = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        for (Bill b : billRepo.findByBillTypeAndPaidFalseAndCancelledFalse("CREDIT")) {
+            if (b.getBalance().signum() > 0) m.merge(b.getCustomerName(), b.getBalance(), BigDecimal::add);
+        }
+        return m.entrySet().stream().sorted(Map.Entry.<String, BigDecimal>comparingByValue().reversed()).toList();
+    }
+
+    /** Oldest unpaid credit bill date per customer (for "due since"). */
+    public Map<String, LocalDate> oldestDue() {
+        Map<String, LocalDate> m = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        for (Bill b : billRepo.findByBillTypeAndPaidFalseAndCancelledFalse("CREDIT")) {
+            m.merge(b.getCustomerName(), b.getBillDate(), (a, c) -> a.isBefore(c) ? a : c);
+        }
+        return m;
+    }
+
+    public List<Bill> ofCustomer(String name) {
+        return billRepo.findByCustomerNameIgnoreCaseOrderByBillDateDescIdDesc(name);
+    }
+
+    public List<Payment> receiptsOf(String name) {
+        return paymentRepo.findByKindAndPartyNameIgnoreCaseOrderByPayDateDescIdDesc(Payment.CUSTOMER, name);
     }
 
     public List<Bill> search(String q, LocalDate from, LocalDate to, String status) {

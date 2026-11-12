@@ -71,7 +71,9 @@
         const tr = e.target.closest('tr');
         if (p.hsn) tr.querySelector('[data-f=hsn]').value = p.hsn;
         if (p.unit) tr.querySelector('[data-f=unit]').value = p.unit;
-        if (p.rate != null) tr.querySelector('[data-f=rate]').value = p.rate;
+        // wholesale bill: use the wholesale price when the item has one
+        const price = p.wholesalePrice != null ? p.wholesalePrice : p.rate;
+        if (price != null) tr.querySelector("[data-f=rate]").value = price;
         const qty = tr.querySelector('[data-f=qty]');
         if (!qty.value) qty.value = 1;
         qty.focus();

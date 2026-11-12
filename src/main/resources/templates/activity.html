@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Activity History')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div class="page-head"><h1>Activity History</h1>
+        <span class="muted small">Price changes, stock adjustments, cancellations, deletions and payments (latest 500)</span></div>
+    <div class="card">
+        <table class="table">
+            <thead><tr><th style="width:150px">When</th><th style="width:180px">What</th><th>Details</th><th>User</th></tr></thead>
+            <tbody>
+            <tr th:each="a : ${logs}">
+                <td class="nowrap" th:text="${#temporals.format(a.at, 'dd/MM/yyyy hh:mm a')}"></td>
+                <td><span class="badge" th:classappend="${#strings.contains(a.action, 'cancel') or #strings.contains(a.action, 'delete')} ? 'red' : 'navy'"
+                          th:text="${a.action}"></span></td>
+                <td th:text="${a.details}"></td>
+                <td class="muted" th:text="${a.userName}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(logs)}"><td colspan="4" class="muted">Nothing recorded yet.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

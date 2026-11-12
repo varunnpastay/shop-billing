@@ -3,21 +3,96 @@
 <head th:replace="~{fragments :: head('Item')}"></head>
 <body>
 <header th:replace="~{fragments :: nav}"></header>
-<main class="container narrow">
+<main class="container">
     <div th:replace="~{fragments :: flash}"></div>
-    <h1 th:text="${product.id == null} ? 'Add Item' : 'Edit Item'"></h1>
-    <form class="card" th:action="@{/products/save}" th:object="${product}" method="post">
+    <div class="page-head">
+        <h1 th:text="${product.id == null} ? 'Add Item' : 'Edit Item'"></h1>
+        <a class="btn ghost" th:href="@{/products}">← All items</a>
+    </div>
+
+    <form th:action="@{/products/save}" th:object="${product}" method="post" enctype="multipart/form-data">
         <input type="hidden" th:field="*{id}">
-        <label>Item / Service Name * <input th:field="*{name}" required></label>
-        <label>HSN / SAC Code <input th:field="*{hsn}"></label>
-        <label>Unit (Nos, Kg, Mtr, Set...) <input th:field="*{unit}"></label>
-        <label>Default Rate (₹) <input type="number" step="0.01" min="0" th:field="*{rate}"></label>
-        <label>MRP (₹) – shown on local bills <input type="number" step="0.01" min="0" th:field="*{mrp}"></label>
+
+        <div class="card">
+            <h3>Item details</h3>
+            <div class="grid-4">
+                <label class="span-2">Item name * <input th:field="*{name}" maxlength="200" required
+                        placeholder="e.g. Mysore Silk Saree – Red"></label>
+                <label>Item code <input th:field="*{code}" maxlength="50" placeholder="e.g. SVT-101"></label>
+                <label>Category <input th:field="*{category}" maxlength="80" list="catList" placeholder="Saree, Dress material…"></label>
+                <label>Saree type <input th:field="*{sareeType}" maxlength="80" list="typeList" placeholder="Kanchipuram, Ilkal…"></label>
+                <label>Fabric <input th:field="*{fabric}" maxlength="80" list="fabricList" placeholder="Silk, Cotton…"></label>
+                <label>Colour <input th:field="*{color}" maxlength="60"></label>
+                <label>Design <input th:field="*{design}" maxlength="120" placeholder="Butta, border…"></label>
+                <label>Barcode / QR (optional) <input th:field="*{barcode}" maxlength="60" placeholder="Scan or type"></label>
+                <label>HSN code <input th:field="*{hsn}" maxlength="20" placeholder="e.g. 5007"></label>
+                <label>Unit <input th:field="*{unit}" maxlength="50" placeholder="Pcs, Mtr, Set"></label>
+            </div>
+            <datalist id="catList">
+                <option value="Saree"><option value="Dress Material"><option value="Blouse Piece"><option value="Shirting">
+                <option value="Suiting"><option value="Dhoti"><option value="Towel"><option value="Bedsheet">
+                <option th:each="c : ${categories}" th:value="${c}"></option>
+            </datalist>
+            <datalist id="typeList">
+                <option value="Kanchipuram"><option value="Ilkal"><option value="Mysore Silk"><option value="Banarasi">
+                <option value="Pochampally"><option value="Gadwal"><option value="Cotton"><option value="Fancy">
+            </datalist>
+            <datalist id="fabricList">
+                <option value="Silk"><option value="Cotton"><option value="Art Silk"><option value="Georgette">
+                <option value="Chiffon"><option value="Polyester"><option value="Linen"><option value="Crepe">
+            </datalist>
+        </div>
+
+        <div class="card">
+            <h3>Prices</h3>
+            <div class="grid-4">
+                <label>Purchase price (₹) <input type="number" step="0.01" min="0" th:field="*{purchasePrice}"></label>
+                <label>Selling price (₹) – local bills <input type="number" step="0.01" min="0" th:field="*{rate}"></label>
+                <label>Wholesale price (₹) – wholesale bills <input type="number" step="0.01" min="0" th:field="*{wholesalePrice}"></label>
+                <label>MRP (₹) – shown on local bills <input type="number" step="0.01" min="0" th:field="*{mrp}"></label>
+            </div>
+            <p class="small muted">Purchase price is used to work out profit. When an item is picked on a bill, the local bill
+                uses the selling price and the wholesale bill uses the wholesale price.</p>
+        </div>
+
+        <div class="card">
+            <h3>Stock</h3>
+            <div class="grid-4">
+                <label th:if="${product.id == null}">Opening stock <input type="number" step="0.001" th:field="*{stockQty}" placeholder="0"></label>
+                <div th:if="${product.id != null}"><span class="muted">Current stock</span><br>
+                    <b style="font-size:20px" th:text="${@money.qty(product.stock())} + ' ' + ${product.unit ?: ''}"
+                       th:classappend="${product.lowStock} ? 'neg'"></b>
+                    <div class="small muted" th:text="${product.bundleText}"></div></div>
+                <label>Minimum stock (alert below this) <input type="number" step="0.001" min="0" th:field="*{minStock}" placeholder="e.g. 5"></label>
+                <label>Pieces per bundle <input type="number" step="1" min="0" th:field="*{piecesPerBundle}" placeholder="e.g. 10"></label>
+            </div>
+            <p class="small muted">Stock goes down automatically with every local and wholesale bill, and up with purchases,
+                returns and cancelled bills.</p>
+        </div>
+
+        <div class="card">
+            <h3>Photo</h3>
+            <img th:if="${product.hasImage}" class="photo-preview" th:src="@{/products/{id}/image(id=${product.id})}" alt="">
+            <label>Choose photo (PNG / JPG, under 1 MB) <input type="file" name="image" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+            <label class="check" th:if="${product.hasImage}"><input type="checkbox" name="removeImage" value="true"> Remove photo</label>
+        </div>
+
         <div class="btn-row">
-            <button class="btn primary">Save</button>
+            <button class="btn primary">Save Item</button>
             <a class="btn ghost" th:href="@{/products}">Cancel</a>
         </div>
     </form>
+
+    <div class="card" th:if="${product.id != null}" style="margin-top:18px">
+        <h3>Adjust stock</h3>
+        <p class="small muted">For damaged pieces, a stock count correction or goods received without a purchase bill.
+            Every change is saved in Activity History.</p>
+        <form class="form-inline" th:action="@{/products/{id}/stock(id=${product.id})}" method="post">
+            <label>Add / remove <input type="number" step="0.001" name="change" required placeholder="10 or -2"></label>
+            <label style="flex:3 1 240px">Reason <input name="reason" maxlength="200" required placeholder="e.g. 2 pieces damaged"></label>
+            <button class="btn">Update stock</button>
+        </form>
+    </div>
 </main>
 </body>
 </html>

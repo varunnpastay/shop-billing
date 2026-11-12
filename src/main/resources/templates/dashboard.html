@@ -3,92 +3,124 @@
 <head th:replace="~{fragments :: head('Dashboard')}"></head>
 <body>
 <header th:replace="~{fragments :: nav}"></header>
-<main class="container">
+<main class="container dash-enter">
     <div th:replace="~{fragments :: flash}"></div>
-    <section class="welcome">
-        <div class="hero-text">
-            <div class="hero-date" th:text="${#temporals.format(#temporals.createToday(), 'EEEE, dd MMMM yyyy')}"></div>
-            <h1 th:text="${shop.shopName}">Shop</h1>
-            <p th:text="${shop.receiptSubtitle ?: 'Billing Dashboard'}"></p>
-            <div class="btn-row">
-                <a class="btn accent" th:href="@{/local/new}">+ Local Bill</a>
-                <a class="btn hero-btn" th:href="@{/bills/new}">+ Wholesale Bill</a>
-            </div>
-        </div>
-        <img class="hero-art" th:src="@{/img/brand-svt.jpg}" alt="SVT">
+    <!-- banner: the shop artwork fills the box; flames, the halo behind Lakshmi, sparkles and petals are animated on top -->
+    <section class="welcome" role="img" th:aria-label="${shop.shopName}">
+        <div class="fx-halo" aria-hidden="true"><i></i></div>
+        <span class="fx-lamp" style="--x:16.8%;--y:20.4%" aria-hidden="true"></span>
+        <span class="fx-lamp" style="--x:83.3%;--y:20.4%" aria-hidden="true"></span>
+        <span class="fx-flame" style="--x:14.1%;--y:20.2%;--d:0s" aria-hidden="true"></span>
+        <span class="fx-flame" style="--x:16.8%;--y:19.4%;--d:.35s" aria-hidden="true"></span>
+        <span class="fx-flame" style="--x:19.5%;--y:20.2%;--d:.7s" aria-hidden="true"></span>
+        <span class="fx-flame" style="--x:80.7%;--y:20.2%;--d:.2s" aria-hidden="true"></span>
+        <span class="fx-flame" style="--x:83.3%;--y:19.4%;--d:.55s" aria-hidden="true"></span>
+        <span class="fx-flame" style="--x:86.0%;--y:20.2%;--d:.9s" aria-hidden="true"></span>
+        <div class="fx-shine" aria-hidden="true"></div>
+        <div class="fx-layer" data-fx="sparkles" data-count="18" aria-hidden="true"></div>
+        <div class="fx-layer" data-fx="petals" data-count="26" aria-hidden="true"></div>
     </section>
 
-    <div class="stats">
+    <div class="stats dash-stats">
         <div class="stat hero">
             <span class="muted">Today – Total</span>
-            <strong th:text="'₹ ' + ${#numbers.formatDecimal(todayTotal.add(localTodayTotal), 1, 'COMMA', 2, 'POINT')}">0</strong>
+            <strong th:text="'₹ ' + ${@money.inr(todayTotal.add(localTodayTotal))}" data-prefix="₹ " th:data-countup="${todayTotal.add(localTodayTotal)}">0</strong>
             <span class="small muted" th:text="${todayCount + localTodayCount} + (${todayCount + localTodayCount} == 1 ? ' bill' : ' bills')"></span>
-        </div>
-        <div class="stat">
-            <span class="muted">Today – Local</span>
-            <strong th:text="'₹ ' + ${#numbers.formatDecimal(localTodayTotal, 1, 'COMMA', 2, 'POINT')}">0</strong>
-            <span class="small muted" th:text="${localTodayCount} + (${localTodayCount} == 1 ? ' bill' : ' bills')"></span>
-        </div>
-        <div class="stat">
-            <span class="muted">Today – Wholesale</span>
-            <strong th:text="'₹ ' + ${#numbers.formatDecimal(todayTotal, 1, 'COMMA', 2, 'POINT')}">0</strong>
-            <span class="small muted" th:text="${todayCount} + (${todayCount} == 1 ? ' bill' : ' bills')"></span>
-        </div>
-        <div class="stat">
-            <span class="muted">This Month – Local</span>
-            <strong th:text="'₹ ' + ${#numbers.formatDecimal(localMonthTotal, 1, 'COMMA', 2, 'POINT')}">0</strong>
-            <span class="small muted" th:text="${localMonthCount} + (${localMonthCount} == 1 ? ' bill' : ' bills')"></span>
-        </div>
-        <div class="stat">
-            <span class="muted">This Month – Wholesale</span>
-            <strong th:text="'₹ ' + ${#numbers.formatDecimal(monthTotal, 1, 'COMMA', 2, 'POINT')}">0</strong>
-            <span class="small muted" th:text="${monthCount} + (${monthCount} == 1 ? ' bill' : ' bills')"></span>
-        </div>
-        <div class="stat">
-            <span class="muted">GST This Month</span>
-            <strong th:text="'₹ ' + ${#numbers.formatDecimal(monthGst, 1, 'COMMA', 2, 'POINT')}">0</strong>
+            <div class="today-split">
+                <a th:href="@{/local}"><span>Local</span>
+                    <b th:text="'₹ ' + ${@money.inr(localTodayTotal)}" data-prefix="₹ " th:data-countup="${localTodayTotal}"></b>
+                    <small th:text="${localTodayCount} + (${localTodayCount} == 1 ? ' bill' : ' bills')"></small></a>
+                <a th:href="@{/bills}"><span>Wholesale</span>
+                    <b th:text="'₹ ' + ${@money.inr(todayTotal)}" data-prefix="₹ " th:data-countup="${todayTotal}"></b>
+                    <small th:text="${todayCount} + (${todayCount} == 1 ? ' bill' : ' bills')"></small></a>
+            </div>
         </div>
         <div class="stat warn">
-            <span class="muted">Pending (Credit)</span>
-            <strong th:text="'₹ ' + ${#numbers.formatDecimal(unpaidTotal, 1, 'COMMA', 2, 'POINT')}">0</strong>
-            <a class="small" th:href="@{/bills(status='UNPAID')}" th:text="${unpaidCount} + (${unpaidCount} == 1 ? ' unpaid bill →' : ' unpaid bills →')"></a>
+            <span class="muted">To Collect / To Pay</span>
+            <strong th:text="'₹ ' + ${@money.inr(receivables)}" data-prefix="₹ " th:data-countup="${receivables}">0</strong>
+            <a class="small" th:href="@{/customers/outstanding}">Customers owe us →</a>
+            <a class="small" th:href="@{/suppliers}" th:text="'We owe suppliers ₹ ' + ${@money.inr(payables)} + ' →'"></a>
+        </div>
+    </div>
+
+    <div class="pie-grid">
+        <div class="card pie-card" th:each="pie : ${pies}">
+            <h3 th:text="${pie.title}"></h3>
+            <div class="small muted" th:text="${pie.subtitle}"></div>
+            <div class="pie-body" th:unless="${pie.empty}">
+                <svg class="pie" viewBox="0 0 42 42" role="img" th:aria-label="${pie.title}">
+                    <circle th:each="sl : ${pie.slices}" class="pie-slice" cx="21" cy="21" r="15.9155" fill="none"
+                            stroke-width="7" th:attr="stroke=${sl.color},stroke-dasharray=${sl.dash + ' ' + (100 - sl.dash)},stroke-dashoffset=${sl.offset}">
+                        <title th:text="${sl.label} + ': ₹ ' + ${@money.inr(sl.value)} + ' (' + ${sl.percent} + '%)'"></title>
+                    </circle>
+                    <text x="21" y="20.4" class="pie-total" text-anchor="middle" th:text="'₹' + ${@money.rs(pie.total)}"></text>
+                    <text x="21" y="24.8" class="pie-cap" text-anchor="middle">total</text>
+                </svg>
+                <ul class="pie-legend">
+                    <li th:each="sl : ${pie.slices}">
+                        <i th:style="'background:' + ${sl.color}"></i>
+                        <span class="pl-label" th:text="${sl.label}"></span>
+                        <b th:text="'₹ ' + ${@money.inr(sl.value)}"></b>
+                        <span class="pl-pct" th:text="${sl.percent} + '%'"></span>
+                    </li>
+                </ul>
+            </div>
+            <p class="muted pie-empty" th:if="${pie.empty}">Nothing recorded yet this month.</p>
+        </div>
+    </div>
+
+    <div class="split" style="margin-bottom:18px">
+        <div class="card">
+            <h3>Low-stock alerts</h3>
+            <ul class="mini-list">
+                <li th:each="p, st : ${stock.low}" th:if="${st.index < 8}">
+                    <a th:href="@{/products/{id}/edit(id=${p.id})}" th:text="${p.name}"></a>
+                    <span><b class="neg" th:text="${@money.qty(p.stock())}"></b>
+                        <span class="small muted" th:text="' / min ' + ${@money.qty(p.minStock)}"></span></span>
+                </li>
+                <li th:if="${#lists.isEmpty(stock.low)}" class="muted">All items are above their minimum stock.</li>
+            </ul>
+        </div>
+        <div class="card">
+            <h3>Best sellers this month</h3>
+            <ul class="mini-list">
+                <li th:each="r : ${bestSellers}"><span th:text="${r.name}"></span>
+                    <span><span class="small muted" th:text="${@money.qty(r.qty)} + ' sold · '"></span><b th:text="'₹ ' + ${@money.inr(r.amount)}"></b></span></li>
+                <li th:if="${#lists.isEmpty(bestSellers)}" class="muted">No sales yet this month.</li>
+            </ul>
         </div>
     </div>
 
     <div class="card">
-        <h3>Recent Wholesale Bills</h3>
+        <div class="flex flex-wrap items-center justify-between gap-3 px-5 pb-3 pt-4">
+            <h3 class="m-0 border-0 p-0">Recent Bills</h3>
+            <div class="flex flex-wrap gap-2">
+                <a class="btn sm" th:href="@{/local}">All Local Bills</a>
+                <a class="btn sm" th:href="@{/bills}">All Wholesale Bills</a>
+            </div>
+        </div>
         <table class="table">
-            <thead><tr><th>Bill No</th><th>Date</th><th>Customer</th><th class="r">Amount</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Type</th><th>Bill No</th><th>Date</th><th>Customer</th><th class="r">Amount</th><th></th></tr></thead>
             <tbody>
-            <tr th:each="b : ${recent}">
-                <td th:text="${b.billNo}"></td>
+            <tr th:each="b : ${recent}" th:classappend="${b.cancelled} ? 'cancelled'">
+                <td><span class="type-chip" th:classappend="${b.local} ? 'local' : 'whole'"
+                          th:text="${b.local} ? 'Local' : 'Wholesale'"></span></td>
+                <td class="font-semibold" th:text="${b.billNo}"></td>
                 <td th:text="${#temporals.format(b.billDate, 'dd/MM/yyyy')}"></td>
                 <td th:text="${b.customerName}"></td>
-                <td class="r" th:text="${#numbers.formatDecimal(b.grandTotal, 1, 'COMMA', 2, 'POINT')}"></td>
-                <td><span th:replace="~{fragments :: status(${b})}"></span></td>
-                <td class="r"><a th:href="@{/bills/{id}(id=${b.id})}">Open</a></td>
+                <td class="r font-semibold" th:text="'₹ ' + ${@money.inr(b.amount)}"></td>
+                <td><div class="row-actions" th:unless="${b.cancelled}">
+                    <a class="btn sm primary" target="_blank"
+                       th:href="${b.local} ? @{/local/{id}(id=${b.id},print=true)} : @{/bills/{id}/print(id=${b.id})}">
+                        <svg th:replace="~{fragments :: printer}"></svg> Print</a>
+                    <a class="btn sm" th:href="${b.local} ? @{/local/{id}(id=${b.id})} : @{/bills/{id}(id=${b.id})}">Open</a>
+                </div><span class="badge grey" th:if="${b.cancelled}">Cancelled</span></td>
             </tr>
-            <tr th:if="${#lists.isEmpty(recent)}"><td colspan="6" class="muted">No bills yet. Create your first bill.</td></tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="card">
-        <h3>Recent Local Bills</h3>
-        <table class="table">
-            <thead><tr><th>Bill No</th><th>Date</th><th>Customer</th><th class="r">Net Payable</th><th></th></tr></thead>
-            <tbody>
-            <tr th:each="b : ${localRecent}" th:classappend="${b.cancelled} ? 'cancelled'">
-                <td th:text="${b.billNo}"></td>
-                <td th:text="${#temporals.format(b.billDate, 'dd/MM/yyyy')}"></td>
-                <td th:text="${b.customerName ?: 'Cash'}"></td>
-                <td class="r" th:text="${#numbers.formatDecimal(b.netPayable, 1, 'COMMA', 2, 'POINT')}"></td>
-                <td class="r"><a th:href="@{/local/{id}(id=${b.id})}">Open</a></td>
-            </tr>
-            <tr th:if="${#lists.isEmpty(localRecent)}"><td colspan="5" class="muted">No local bills yet.</td></tr>
+            <tr th:if="${#lists.isEmpty(recent)}"><td colspan="6" class="muted">No bills yet. Press "+ Local Bill" or "+ Wholesale Bill" to make the first one.</td></tr>
             </tbody>
         </table>
     </div>
 </main>
+<script th:src="@{/js/fx.js}" defer></script>
 </body>
 </html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Suppliers')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="page-head">
+        <h1>Suppliers</h1>
+        <div class="btn-row">
+            <a class="btn" th:href="@{/purchases/new}">+ Purchase</a>
+            <a class="btn primary" th:href="@{/suppliers/new}">+ Add Supplier</a>
+        </div>
+    </div>
+    <div class="stats">
+        <div class="stat warn"><span class="muted">We owe suppliers</span>
+            <strong th:text="'₹ ' + ${@money.inr(payables)}"></strong></div>
+    </div>
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Supplier</th><th>Phone</th><th>GSTIN</th><th class="r">Balance to pay</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${rows}">
+                <td><a th:href="@{/suppliers/{id}(id=${r.supplier.id})}" th:text="${r.supplier.name}"></a>
+                    <div class="small muted" th:text="${r.supplier.address}"></div></td>
+                <td th:text="${r.supplier.phone}"></td>
+                <td th:text="${r.supplier.gstin}"></td>
+                <td class="r"><b th:text="${@money.inr(r.balance)}" th:classappend="${r.balance.signum() > 0} ? 'neg'"></b></td>
+                <td class="r nowrap"><a class="btn sm" th:href="@{/suppliers/{id}(id=${r.supplier.id})}">Open</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(rows)}"><td colspan="5" class="muted">No suppliers yet. Add the textile suppliers you buy from.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

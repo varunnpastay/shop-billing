@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title th:text="'Local Bill | ' + ${shop.shopName}">Local Bill</title>
     <link rel="icon" type="image/svg+xml" th:href="@{/img/logo.svg}">
-    <link rel="stylesheet" th:href="@{/css/style.css}">
-    <link rel="stylesheet" th:href="@{/css/local-bill.css}">
+    <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
 <body class="sb-body">
 <header th:replace="~{fragments :: nav}"></header>
@@ -41,11 +40,19 @@
                     </div>
                     <div class="field-row">
                         <label for="customerName">Customer Name</label>
-                        <input type="text" id="customerName" name="customerName" list="customer-list" placeholder="Cash">
+                        <input type="text" id="customerName" name="customerName" maxlength="150" list="customer-list" placeholder="Cash">
                     </div>
                     <div class="field-row">
                         <label for="custMobile">Cust Mobile No</label>
                         <input type="tel" id="custMobile" name="custMobile" inputmode="numeric" maxlength="15">
+                    </div>
+                    <div class="field-row">
+                        <label for="paymentMode">Payment</label>
+                        <select id="paymentMode" name="paymentMode">
+                            <option value="CASH">Cash</option>
+                            <option value="UPI">UPI</option>
+                            <option value="BANK">Bank transfer</option>
+                        </select>
                     </div>
                 </div>
 
@@ -74,8 +81,8 @@
                 </div>
 
                 <div class="action-row">
-                    <button type="button" id="print-btn">Print Bill</button>
-                    <button type="button" id="new-bill-btn">New Bill</button>
+                    <button type="button" id="print-btn"><svg th:replace="~{fragments :: printer}"></svg> Save &amp; Print Bill</button>
+                    <button type="button" id="new-bill-btn">+ New Bill</button>
                 </div>
 
                 <div class="tools">

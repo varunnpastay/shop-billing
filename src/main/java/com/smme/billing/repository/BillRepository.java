@@ -17,4 +17,8 @@ public interface BillRepository extends JpaRepository<Bill, Long> {
 
     @org.springframework.data.jpa.repository.Query("select distinct b.byName from Bill b where b.byName is not null order by b.byName")
     List<String> findDistinctByNames();
+
+    List<Bill> findByCustomerNameIgnoreCaseOrderByBillDateDescIdDesc(String customerName);
+    List<Bill> findByCustomerNameIgnoreCaseAndBillTypeAndPaidFalseAndCancelledFalseOrderByBillDateAscIdAsc(String customerName, String billType);
+    List<Bill> findByBillTypeAndPaidFalseAndCancelledFalse(String billType);
 }

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Payment Reminders')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="page-head">
+        <h1>Payment Reminders</h1>
+        <button class="btn" onclick="window.print()">Print / PDF</button>
+    </div>
+    <div class="stats">
+        <div class="stat warn"><span class="muted">Total to collect</span><strong th:text="'₹ ' + ${@money.inr(total)}"></strong>
+            <span class="small muted" th:text="${#lists.size(rows)} + ' customers'"></span></div>
+    </div>
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Customer</th><th>Phone</th><th>Due since</th><th class="r">Days</th><th class="r">Outstanding</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="r : ${rows}">
+                <td><a th:if="${r.customerId}" th:href="@{/customers/{id}(id=${r.customerId})}" th:text="${r.name}"></a>
+                    <a th:unless="${r.customerId}" th:href="@{/bills(q=${r.name},status='UNPAID')}" th:text="${r.name}"></a></td>
+                <td th:text="${r.phone}"></td>
+                <td th:text="${r.since} ? ${#temporals.format(r.since, 'dd/MM/yyyy')} : ''"></td>
+                <td class="r"><span th:text="${r.days}" th:classappend="${r.days > 30} ? 'neg'"></span>
+                    <span class="badge red" th:if="${r.days > 30}">Over 30</span></td>
+                <td class="r"><b th:text="${@money.inr(r.amount)}"></b></td>
+                <td class="r nowrap">
+                    <a class="btn sm green" th:if="${r.whatsapp}" th:href="${r.whatsapp}" target="_blank" rel="noopener">WhatsApp reminder</a>
+                    <span class="small muted" th:unless="${r.whatsapp}">No mobile no.</span>
+                    <a class="btn sm" th:if="${r.customerId}" th:href="@{/customers/{id}(id=${r.customerId})}">Receive Payment</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(rows)}"><td colspan="6" class="muted">Nobody owes money. All credit bills are paid.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

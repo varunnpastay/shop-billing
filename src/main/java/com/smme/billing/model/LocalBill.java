@@ -27,6 +27,11 @@ public class LocalBill {
 
     private String customerName;
     private String custMobile;
+    /** CASH, UPI or BANK */
+    private String paymentMode = "CASH";
+
+    public String getPaymentMode() { return paymentMode; }
+    public void setPaymentMode(String paymentMode) { this.paymentMode = paymentMode; }
 
     private BigDecimal totalQty = BigDecimal.ZERO;
     private BigDecimal totalSale = BigDecimal.ZERO;

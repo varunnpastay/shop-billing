@@ -31,9 +31,9 @@ function todayIso() {
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 }
 
-// 3 -> "3", 2.5 -> "2.50" (metres of cloth)
+// 3 -> "3", 2.5 -> "2.5", 0.1 + 0.2 -> "0.3" (metres of cloth; rounding hides float noise)
 function fmtQty(q) {
-  return Number.isInteger(q) ? String(q) : q.toFixed(2);
+  return String(Math.round(q * 1000) / 1000);
 }
 
 // yyyy-mm-dd -> dd-mm-yyyy for the printed receipt
@@ -48,7 +48,7 @@ function addItemRow(name = "", qty = 1, mrp = 0, rate = 0) {
   const tbody = $("items-input-body");
   const tr = document.createElement("tr");
   tr.innerHTML = `
-    <td><input type="text" class="item-name" list="product-list"/></td>
+    <td><input type="text" class="item-name" maxlength="200" list="product-list"/></td>
     <td><input type="number" class="item-qty" min="0" step="any"/></td>
     <td><input type="number" class="item-mrp" min="0" step="0.01"/></td>
     <td><input type="number" class="item-rate" min="0" step="0.01"/></td>
@@ -180,7 +180,7 @@ function updatePreview() {
     const tr = document.createElement("tr");
     [
       [item.name, ""],
-      [String(item.qty), "col-qty"],
+      [fmtQty(item.qty), "col-qty"],
       [item.mrp.toFixed(2), "col-mrp"],
       [item.rate.toFixed(2), "col-rate"],
       [item.amt.toFixed(2), "col-amt"],
@@ -227,6 +227,7 @@ function getBillDataFromForm() {
     billDate: $("billDate").value || null,
     customerName: $("customerName").value,
     custMobile: $("custMobile").value,
+    paymentMode: $("paymentMode").value,
     items: getItemsFromForm()
       .filter((i) => i.name.trim())
       .map((i) => ({ name: i.name, qty: i.qty, mrp: i.mrp, rate: i.rate })),
@@ -240,6 +241,7 @@ function setFormFromBillData(data) {
   $("billDate").value = data.billDate || "";
   $("customerName").value = data.customerName || "";
   $("custMobile").value = data.custMobile || "";
+  $("paymentMode").value = data.paymentMode || "CASH";
   currentTime = data.time || null;
   cancelled = !!data.cancelled;
 
@@ -261,6 +263,7 @@ function newBill() {
   $("billDate").value = todayIso();
   $("customerName").value = "";
   $("custMobile").value = "";
+  $("paymentMode").value = "CASH";
   currentTime = null;
   cancelled = false;
   $("print-btn").disabled = false;
@@ -392,8 +395,9 @@ async function init() {
     btn.disabled = true;
     try {
       updateTotalsFromForm();
-      await saveCurrentBill();
-      showMsg("");
+      const saved = await saveCurrentBill();
+      // the form still holds this saved bill; typing more would change it, so point to New Bill
+      showMsg("Bill " + saved.billNo + " saved. Press New Bill for the next customer.", "ok");
       updatePreview();
       window.print();
     } catch (e) {

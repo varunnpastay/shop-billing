@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Purchase')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="page-head">
+        <h1 th:text="${purchase.id == null} ? 'New Purchase (goods received)' : 'Edit Purchase'"></h1>
+        <a class="btn ghost" th:href="@{/purchases}">← All purchases</a>
+    </div>
+
+    <div class="alert warn-box" th:if="${#lists.isEmpty(suppliers)}">
+        Add a supplier first. <a th:href="@{/suppliers/new}">+ Add Supplier</a>
+    </div>
+
+    <form id="purchaseForm" th:action="@{/purchases/save}" th:object="${purchase}" method="post">
+        <input type="hidden" th:field="*{id}">
+        <div class="card grid-4">
+            <label class="span-2">Supplier *
+                <select th:field="*{supplierId}" required>
+                    <option value="">-- choose --</option>
+                    <option th:each="s : ${suppliers}" th:value="${s.id}" th:text="${s.name}"></option>
+                </select>
+            </label>
+            <label>Supplier invoice no <input th:field="*{invoiceNo}" maxlength="60"></label>
+            <label>Date <input type="date" th:field="*{purchaseDate}" required></label>
+        </div>
+
+        <datalist id="productList">
+            <option th:each="p : ${products}" th:value="${p.name}" th:data-cost="${p.purchasePrice}"></option>
+        </datalist>
+
+        <div class="card">
+            <table class="table items">
+                <thead><tr><th style="width:40px">#</th><th>Item (pick from list so stock is updated)</th>
+                    <th style="width:120px">Qty</th><th style="width:140px">Rate (₹)</th><th style="width:140px" class="r">Amount</th><th style="width:40px"></th></tr></thead>
+                <tbody id="rows">
+                <tr th:each="item, st : *{items}" class="item-row">
+                    <td class="sl" th:text="${st.count}"></td>
+                    <td><input th:field="*{items[__${st.index}__].productName}" data-f="productName" list="productList" maxlength="200" autocomplete="off"></td>
+                    <td><input type="number" step="0.001" min="0" th:field="*{items[__${st.index}__].qty}" data-f="qty"></td>
+                    <td><input type="number" step="0.01" min="0" th:field="*{items[__${st.index}__].rate}" data-f="rate"></td>
+                    <td class="r amt">0.00</td>
+                    <td><button type="button" class="btn-x" title="Remove">✕</button></td>
+                </tr>
+                </tbody>
+            </table>
+            <button type="button" class="btn ghost" id="addRow">+ Add Item</button>
+        </div>
+
+        <div class="bill-bottom">
+            <div class="card">
+                <label>Other charges (freight, GST…) ₹ <input type="number" step="0.01" min="0" th:field="*{otherCharges}" id="other"></label>
+                <label>Notes <textarea th:field="*{notes}" maxlength="400" rows="2"></textarea></label>
+                <p class="small muted">Items not in your item list are saved on the purchase but do not change stock.
+                    <a th:href="@{/products/new}" target="_blank">+ Add a new item</a></p>
+            </div>
+            <div class="card totals">
+                <div class="grand"><span>Total</span><b id="total">0.00</b></div>
+                <div class="actions"><button class="btn primary">Save Purchase</button></div>
+            </div>
+        </div>
+    </form>
+</main>
+
+<template id="rowTpl">
+    <tr class="item-row">
+        <td class="sl"></td>
+        <td><input data-f="productName" list="productList" maxlength="200" autocomplete="off"></td>
+        <td><input type="number" step="0.001" min="0" data-f="qty"></td>
+        <td><input type="number" step="0.01" min="0" data-f="rate"></td>
+        <td class="r amt">0.00</td>
+        <td><button type="button" class="btn-x" title="Remove">✕</button></td>
+    </tr>
+</template>
+
+<script>
+(function () {
+    const rows = document.getElementById('rows');
+    const num = v => parseFloat(v) || 0;
+    const fmt = n => n.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    function reindex() {
+        rows.querySelectorAll('tr.item-row').forEach((tr, i) => {
+            tr.querySelector('.sl').textContent = i + 1;
+            tr.querySelectorAll('input[data-f]').forEach(inp => { inp.name = 'items[' + i + '].' + inp.dataset.f; });
+        });
+    }
+    function calc() {
+        let total = num(document.getElementById('other').value);
+        rows.querySelectorAll('tr.item-row').forEach(tr => {
+            const amt = Math.round(num(tr.querySelector('[data-f=qty]').value) * num(tr.querySelector('[data-f=rate]').value) * 100) / 100;
+            tr.querySelector('.amt').textContent = fmt(amt);
+            total += amt;
+        });
+        document.getElementById('total').textContent = '₹ ' + fmt(total);
+    }
+    function addRow() {
+        rows.appendChild(document.getElementById('rowTpl').content.cloneNode(true));
+        reindex();
+        rows.lastElementChild.querySelector('[data-f=productName]').focus();
+    }
+    rows.addEventListener('change', e => {
+        if (e.target.dataset.f !== 'productName') return;
+        const v = e.target.value.trim().toLowerCase();
+        const opt = [...document.querySelectorAll('#productList option')].find(o => o.value.toLowerCase() === v);
+        const rate = e.target.closest('tr').querySelector('[data-f=rate]');
+        if (opt && opt.dataset.cost && !rate.value) rate.value = opt.dataset.cost;
+        calc();
+    });
+    rows.addEventListener('click', e => {
+        if (!e.target.classList.contains('btn-x')) return;
+        const tr = e.target.closest('tr');
+        if (rows.querySelectorAll('tr.item-row').length === 1) tr.querySelectorAll('input').forEach(i => i.value = '');
+        else tr.remove();
+        reindex(); calc();
+    });
+    rows.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && e.target.dataset.f === 'rate' && e.target.closest('tr') === rows.lastElementChild) { e.preventDefault(); addRow(); }
+    });
+    document.getElementById('purchaseForm').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault();
+    });
+    document.getElementById('addRow').addEventListener('click', addRow);
+    document.getElementById('purchaseForm').addEventListener('input', calc);
+    reindex(); calc();
+})();
+</script>
+</body>
+</html>

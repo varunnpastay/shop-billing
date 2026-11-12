@@ -8,11 +8,18 @@
     <h1 th:text="${customer.id == null} ? 'Add Customer' : 'Edit Customer'"></h1>
     <form class="card" th:action="@{/customers/save}" th:object="${customer}" method="post">
         <input type="hidden" th:field="*{id}">
-        <label>Name * <input th:field="*{name}" required></label>
-        <label>Address <textarea th:field="*{address}" rows="2"></textarea></label>
+        <label>Name * <input th:field="*{name}" maxlength="150" required></label>
+        <label>Customer type
+            <select th:field="*{customerType}">
+                <option value="">—</option>
+                <option value="RETAIL">Retail</option>
+                <option value="WHOLESALE">Wholesale</option>
+            </select>
+        </label>
+        <label>Address <textarea th:field="*{address}" maxlength="400" rows="2"></textarea></label>
         <label>GSTIN <input th:field="*{gstin}" maxlength="15"></label>
-        <label>Phone <input th:field="*{phone}"></label>
-        <label>State <input th:field="*{stateName}"></label>
+        <label>Phone <input th:field="*{phone}" maxlength="30"></label>
+        <label>State <input th:field="*{stateName}" maxlength="50"></label>
         <div class="btn-row">
             <button class="btn primary">Save</button>
             <a class="btn ghost" th:href="@{/customers}">Cancel</a>

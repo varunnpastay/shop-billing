@@ -2,21 +2,47 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Login')}"></head>
 <body class="login-body">
-<div class="login-split">
-    <div class="login-art" role="img" th:aria-label="${shop.shopName}"></div>
+<!-- background graphics: rotating mandalas, drifting peacock feathers, rising gold sparkles -->
+<div class="login-bg" aria-hidden="true">
+    <img class="mandala m1" th:src="@{/img/mandala.svg}" alt="">
+    <img class="mandala m2" th:src="@{/img/mandala.svg}" alt="">
+    <div class="fx-layer" data-fx="feathers" data-count="6" th:data-src="@{/img/feather.svg}"></div>
+    <div class="fx-layer" data-fx="sparkles" data-mode="rise" data-count="45"></div>
+</div>
+
+<main class="login-stage">
+    <!-- the artwork: the peacock flies in first, then the rest appears around it; the peacock keeps glowing -->
+    <div class="login-art" role="img" th:aria-label="${shop.shopName}">
+        <div class="art-frame">
+            <div class="art-glow"></div>
+            <img class="art-base" th:src="@{/img/login-art.jpg}" alt="">
+            <div class="art-peacock">
+                <div class="art-peacock-mask">
+                    <img th:src="@{/img/login-art.jpg}" alt="">
+                    <div class="art-peacock-shine"></div>
+                </div>
+            </div>
+            <div class="art-sparkles fx-layer" data-fx="sparkles" data-count="14"></div>
+        </div>
+    </div>
+
     <form class="login-card" th:action="@{/login}" method="post">
         <div class="login-head">
             <img th:if="${hasLogo}" th:src="@{/shop-logo}" alt="" class="login-logo">
-            <img th:unless="${hasLogo}" th:src="@{/img/svt-mark-navy.svg}" alt="SVT" class="login-logo wide">
-            <h2 th:text="${shop.shopName}">Shop</h2>
-            <p class="muted">Billing System – Sign in</p>
+            <div class="login-kicker">Billing System</div>
+            <h2>Welcome back</h2>
+            <p>Sign in to <span th:text="${shop.shopName}">the shop</span></p>
         </div>
         <div class="alert ok" th:if="${msg}" th:text="${msg}"></div>
         <div class="alert err" th:if="${error}" th:text="${error}"></div>
         <label>Username <input name="username" th:value="${username}" required autofocus autocomplete="username"></label>
         <label>Password <input type="password" name="password" required autocomplete="current-password"></label>
-        <button class="btn primary full">Login</button>
+        <button class="btn accent full">Login</button>
+        <div class="login-foot">
+            <span class="rule"></span><span>Sarees &amp; Wholesale Cloth Merchant</span><span class="rule"></span>
+        </div>
     </form>
-</div>
+</main>
+<script th:src="@{/js/fx.js}" defer></script>
 </body>
 </html>

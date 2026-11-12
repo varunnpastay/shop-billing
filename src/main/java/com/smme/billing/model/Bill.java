@@ -54,6 +54,23 @@ public class Bill {
     /** "By:" on the bill – who sold / booked the order (salesman or agent). */
     private String byName;
 
+    /** How the money came in: CASH, UPI or BANK. */
+    private String paymentMode = "CASH";
+    /** Part-payments received against a credit bill (from customer receipts). */
+    private BigDecimal amountReceived;
+
+    public String getPaymentMode() { return paymentMode; }
+    public void setPaymentMode(String paymentMode) { this.paymentMode = paymentMode; }
+    public BigDecimal getAmountReceived() { return amountReceived; }
+    public void setAmountReceived(BigDecimal amountReceived) { this.amountReceived = amountReceived; }
+
+    /** Amount still to be collected on this bill. */
+    public BigDecimal getBalance() {
+        if (cancelled || paid || grandTotal == null) return BigDecimal.ZERO;
+        BigDecimal b = grandTotal.subtract(amountReceived == null ? BigDecimal.ZERO : amountReceived);
+        return b.signum() > 0 ? b : BigDecimal.ZERO;
+    }
+
     public String getByName() { return byName; }
     public void setByName(String byName) { this.byName = byName; }
 

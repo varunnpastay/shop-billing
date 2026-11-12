@@ -25,16 +25,28 @@ public class LocalBillService {
     private final LocalBillRepository repo;
     private final SettingService settingService;
     private final CustomerRepository customerRepo;
+    private final StockService stock;
+    private final ActivityService activity;
 
-    public LocalBillService(LocalBillRepository repo, SettingService settingService, CustomerRepository customerRepo) {
+    public LocalBillService(LocalBillRepository repo, SettingService settingService, CustomerRepository customerRepo,
+                            StockService stock, ActivityService activity) {
         this.repo = repo;
         this.settingService = settingService;
         this.customerRepo = customerRepo;
+        this.stock = stock;
+        this.activity = activity;
+    }
+
+    static java.util.Map<String, BigDecimal> qty(LocalBill b) {
+        java.util.Map<String, BigDecimal> m = StockService.totals();
+        for (LocalBillItem i : b.getItems()) StockService.add(m, i.getName(), i.getQty());
+        return m;
     }
 
     public record ItemForm(String name, BigDecimal qty, BigDecimal mrp, BigDecimal rate) {}
 
-    public record BillForm(Long id, LocalDate billDate, String customerName, String custMobile, List<ItemForm> items) {}
+    public record BillForm(Long id, LocalDate billDate, String customerName, String custMobile, String paymentMode,
+                           List<ItemForm> items) {}
 
     public LocalBill get(Long id) {
         return repo.findById(id).orElseThrow(() -> new NotFoundException("Bill not found"));
@@ -70,6 +82,7 @@ public class LocalBillService {
         if (form.id() != null) {
             bill = get(form.id());
             if (bill.isCancelled()) throw new BillService.InvalidBillException("A cancelled bill cannot be changed. Restore it first.");
+            stock.apply(qty(bill), +1);   // old lines back into stock; the new lines are taken out below
         } else {
             bill = new LocalBill();
             bill.setCreatedAt(LocalDateTime.now());
@@ -89,6 +102,7 @@ public class LocalBillService {
         bill.setBillDate(date);
         bill.setCustomerName(trim(form.customerName()));
         bill.setCustMobile(trim(form.custMobile()));
+        bill.setPaymentMode(BillService.mode(form.paymentMode()));
 
         List<LocalBillItem> items = new ArrayList<>();
         if (form.items() != null) {
@@ -113,6 +127,7 @@ public class LocalBillService {
         bill.getItems().clear();
         bill.getItems().addAll(items);
         calculate(bill);
+        stock.apply(qty(bill), -1);
         saveCustomerIfNew(bill.getCustomerName(), bill.getCustMobile());
         return repo.save(bill);
     }
@@ -149,8 +164,12 @@ public class LocalBillService {
     @Transactional
     public void setCancelled(Long id, boolean cancelled) {
         LocalBill b = get(id);
+        if (b.isCancelled() == cancelled) return;
         b.setCancelled(cancelled);
+        stock.apply(qty(b), cancelled ? +1 : -1);
         repo.save(b);
+        activity.log(cancelled ? "Bill cancelled" : "Bill restored",
+                "Local bill " + b.getBillNo() + " – " + (b.getCustomerName() == null ? "Cash" : b.getCustomerName()) + " – ₹" + b.getNetPayable());
     }
 
     public List<LocalBill> savedList() {

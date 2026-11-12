@@ -1,0 +1,208 @@
+/* ==========================================================================
+   Animations & graphics: dashboard banner and login page.
+   Included at the end of app.css by the build. Positions on the banner are
+   percentages of the picture (see .welcome). Everything stops for people
+   who ask their computer for reduced motion.
+   ========================================================================== */
+@property --ang { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+
+.fx-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+
+/* ---- rotating golden rays behind the goddess ---- */
+.fx-halo {
+    position: absolute; left: 49.8%; top: 12.5%; width: 30%; aspect-ratio: 1; transform: translate(-50%, -50%);
+    pointer-events: none; mix-blend-mode: screen;
+}
+.fx-halo::before, .fx-halo::after { content: ""; position: absolute; inset: 0; border-radius: 50%; }
+.fx-halo::before {
+    background: repeating-conic-gradient(from 0deg, rgba(255,214,120,.55) 0deg 2.5deg, rgba(255,214,120,0) 2.5deg 15deg);
+    -webkit-mask: radial-gradient(circle, transparent 0 21%, #000 31%, rgba(0,0,0,.45) 50%, transparent 70%);
+    mask: radial-gradient(circle, transparent 0 21%, #000 31%, rgba(0,0,0,.45) 50%, transparent 70%);
+    animation: fx-spin 28s linear infinite;
+}
+.fx-halo::after {
+    background: repeating-conic-gradient(from 7.5deg, rgba(255,240,200,.4) 0deg 1.2deg, rgba(255,240,200,0) 1.2deg 15deg);
+    -webkit-mask: radial-gradient(circle, transparent 0 24%, #000 33%, transparent 58%);
+    mask: radial-gradient(circle, transparent 0 24%, #000 33%, transparent 58%);
+    animation: fx-spin 40s linear infinite reverse;
+}
+.fx-halo i {
+    position: absolute; inset: 14%; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,220,140,0) 22%, rgba(255,200,90,.38) 36%, rgba(255,180,60,0) 66%);
+    animation: fx-pulse 3.2s ease-in-out infinite;
+}
+
+/* ---- glowing lamps (deepa) ---- */
+.fx-lamp {
+    position: absolute; left: var(--x); top: var(--y); width: 13%; aspect-ratio: 1; border-radius: 50%;
+    transform: translate(-50%, -50%); pointer-events: none; mix-blend-mode: screen;
+    background: radial-gradient(circle, rgba(255,196,90,.6) 0%, rgba(255,150,40,.2) 38%, rgba(255,150,40,0) 68%);
+    animation: fx-lamp 2.6s ease-in-out infinite;
+}
+.fx-flame {
+    position: absolute; left: var(--x); top: var(--y); width: 1.15%; aspect-ratio: .55; pointer-events: none;
+    border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; transform-origin: 50% 100%; transform: translate(-50%, -80%);
+    background: radial-gradient(ellipse at 50% 72%, #fffbe6 0%, #ffe08a 30%, rgba(255,150,40,.75) 58%, rgba(255,120,20,0) 76%);
+    mix-blend-mode: screen; filter: blur(.4px) drop-shadow(0 0 6px rgba(255,190,80,.9));
+    animation: fx-flicker 1.3s ease-in-out var(--d) infinite alternate;
+}
+
+/* ---- light sweeping across the banner and the Today card ---- */
+.fx-shine {
+    position: absolute; inset: 0; pointer-events: none; mix-blend-mode: screen;
+    background: linear-gradient(105deg, transparent 42%, rgba(255,236,180,.16) 47%, rgba(255,255,255,.28) 50%, rgba(255,236,180,.16) 53%, transparent 58%);
+    background-size: 260% 100%; animation: fx-sweep 8s ease-in-out infinite;
+}
+.stat.hero::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(115deg, transparent 38%, rgba(255,231,163,.16) 50%, transparent 62%);
+    background-size: 260% 100%; animation: fx-sweep 6s ease-in-out 1s infinite;
+}
+
+/* ---- sparkles ---- */
+.spark {
+    position: absolute; left: var(--x); top: var(--y); width: calc(var(--size) * 2.2); aspect-ratio: 1;
+    background: radial-gradient(circle, #fff 0%, #ffe7a3 45%, #f2b33d 80%);
+    clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+    animation: fx-twinkle var(--dur) ease-in-out var(--delay) infinite;
+}
+.spark.rise {
+    top: auto; bottom: -12px; width: var(--size); clip-path: none; border-radius: 50%;
+    background: radial-gradient(circle, #fff6d8 0%, rgba(242,179,61,.9) 45%, rgba(242,179,61,0) 75%);
+    box-shadow: 0 0 8px rgba(242,179,61,.7);
+    animation: fx-rise var(--dur) linear var(--delay) infinite;
+}
+
+/* ---- rose petals ---- */
+.petal {
+    position: absolute; top: -8%; left: var(--x); width: var(--size); height: calc(var(--size) * 1.2);
+    animation: fx-fall var(--dur) linear var(--delay) infinite, fx-sway calc(var(--dur) / 3) ease-in-out var(--delay) infinite alternate;
+}
+.petal i {
+    display: block; width: 100%; height: 100%;
+    border-radius: 70% 70% 50% 50% / 80% 80% 30% 30%;
+    background: radial-gradient(ellipse at 38% 28%, #ffd5df 0%, var(--c) 52%, #7d0c2c 100%);
+    box-shadow: inset -1px -2px 3px rgba(80,0,20,.35), 0 1px 3px rgba(0,0,0,.25);
+    animation: fx-flutter var(--spin) ease-in-out infinite alternate;
+}
+
+/* ---- dashboard: cards slide in, pies draw themselves, cards lift on hover ---- */
+.dash-enter > * { animation: fx-rise-in .7s cubic-bezier(.2,.7,.2,1) both; }
+.dash-enter > *:nth-child(2) { animation-delay: .05s; }
+.dash-enter > *:nth-child(3) { animation-delay: .15s; }
+.dash-enter > *:nth-child(4) { animation-delay: .25s; }
+.dash-enter > *:nth-child(5) { animation-delay: .35s; }
+.dash-enter > *:nth-child(6) { animation-delay: .45s; }
+.dash-enter .pie-slice { animation: fx-pie 1.5s cubic-bezier(.3,.7,.2,1) .5s both; }
+.dash-enter .stat, .dash-enter .pie-card, .dash-enter .split > .card { transition: transform .2s ease, box-shadow .2s ease; }
+.dash-enter .stat:hover, .dash-enter .pie-card:hover, .dash-enter .split > .card:hover {
+    transform: translateY(-3px); box-shadow: 0 12px 28px rgba(11,31,58,.14);
+}
+
+/* ---- login page ---- */
+.login-bg { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.login-stage { position: relative; z-index: 1; }
+.mandala { position: absolute; opacity: .08; animation: fx-spin 120s linear infinite; }
+.mandala.m1 { width: 780px; right: -240px; top: 50%; margin-top: -390px; }
+.mandala.m2 { width: 460px; left: -150px; bottom: -150px; opacity: .06; animation-duration: 90s; animation-direction: reverse; }
+.feather {
+    position: absolute; left: var(--x); top: -160px; width: var(--size); opacity: .55;
+    filter: drop-shadow(0 0 8px rgba(43,179,163,.45));
+    animation: fx-feather var(--dur) linear var(--delay) infinite;
+}
+
+.art-frame { position: relative; aspect-ratio: 3 / 2; width: min(100%, calc((100vh - 56px) * 1.5)); }
+.art-base, .art-peacock, .art-peacock-mask, .art-peacock-mask img { position: absolute; inset: 0; width: 100%; height: 100%; }
+.art-base {
+    -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 55%, rgba(0,0,0,.6) 76%, transparent 97%);
+    mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 55%, rgba(0,0,0,.6) 76%, transparent 97%);
+    animation: fx-art-in 1.5s ease-out 1s both;
+}
+.art-glow {
+    position: absolute; inset: 6%; border-radius: 50%;
+    background: radial-gradient(ellipse, rgba(242,179,61,.3), rgba(242,179,61,0) 66%);
+    animation: fx-pulse 4s ease-in-out infinite;
+}
+/* the peacock: the same picture cut to the peacock area, so it can fly in and glow on its own */
+.art-peacock {
+    transform-origin: 30% 30%;
+    animation: fx-peacock-in 1.9s cubic-bezier(.22,.8,.25,1) both, fx-peacock-glow 3s ease-in-out 1.9s infinite;
+}
+.art-peacock-mask {
+    -webkit-mask-image: radial-gradient(ellipse 13% 21% at 29.5% 29.5%, #000 55%, transparent 100%);
+    mask-image: radial-gradient(ellipse 13% 21% at 29.5% 29.5%, #000 55%, transparent 100%);
+}
+.art-peacock-shine {
+    position: absolute; inset: 0; mix-blend-mode: screen;
+    background: linear-gradient(115deg, transparent 44%, rgba(255,246,210,.55) 50%, transparent 56%);
+    background-size: 300% 100%; animation: fx-sweep 4.5s ease-in-out 2.2s infinite;
+}
+/* a gold light running round the edge of the login box */
+.login-card { animation: fx-rise-in .9s ease-out .5s both; }
+.login-card::after {
+    content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 2px; pointer-events: none;
+    background: conic-gradient(from var(--ang), transparent 0deg 240deg, rgba(242,179,61,.85) 300deg, #fff3c4 330deg, rgba(242,179,61,.85) 345deg, transparent 360deg);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    animation: fx-border 5s linear infinite;
+}
+
+@media (max-width: 800px) {
+    .art-frame { width: 100%; max-width: 520px; }
+    .mandala.m1 { width: 520px; right: -230px; }
+}
+
+/* ---- keyframes ---- */
+@keyframes fx-spin { to { transform: rotate(360deg); } }
+@keyframes fx-border { to { --ang: 360deg; } }
+@keyframes fx-pulse { 0%, 100% { opacity: .6; transform: scale(.96); } 50% { opacity: 1; transform: scale(1.05); } }
+@keyframes fx-lamp {
+    0%, 100% { opacity: .7; transform: translate(-50%, -50%) scale(.94); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+}
+@keyframes fx-flicker {
+    0% { transform: translate(-50%, -80%) scale(1, 1) skewX(0deg); opacity: .9; }
+    30% { transform: translate(-50%, -80%) scale(1.1, 1.22) skewX(-5deg); opacity: 1; }
+    55% { transform: translate(-50%, -80%) scale(.92, 1.04) skewX(4deg); opacity: .8; }
+    80% { transform: translate(-50%, -80%) scale(1.06, 1.28) skewX(-2deg); opacity: 1; }
+    100% { transform: translate(-50%, -80%) scale(.97, .95) skewX(2deg); opacity: .88; }
+}
+@keyframes fx-sweep { 0%, 55% { background-position: 150% 0; } 100% { background-position: -50% 0; } }
+@keyframes fx-twinkle {
+    0%, 100% { opacity: 0; transform: scale(.2) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1) rotate(90deg); }
+}
+@keyframes fx-rise {
+    0% { transform: translate(0, 0); opacity: 0; }
+    10% { opacity: .9; }
+    85% { opacity: .5; }
+    100% { transform: translate(40px, -105vh); opacity: 0; }
+}
+@keyframes fx-fall { from { top: -8%; } to { top: 108%; } }
+@keyframes fx-sway { from { transform: translateX(calc(var(--sway) * -1)); } to { transform: translateX(var(--sway)); } }
+@keyframes fx-flutter {
+    from { transform: rotate(0deg) rotateX(0deg) rotateY(0deg); }
+    to { transform: rotate(220deg) rotateX(65deg) rotateY(45deg); }
+}
+@keyframes fx-rise-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes fx-pie { from { stroke-dasharray: 0 100; } }
+@keyframes fx-feather {
+    from { transform: translate(0, 0) rotate(var(--tilt)); }
+    50% { transform: translate(70px, 60vh) rotate(calc(var(--tilt) + 25deg)); }
+    to { transform: translate(-20px, 125vh) rotate(calc(var(--tilt) - 10deg)); }
+}
+@keyframes fx-art-in { from { opacity: 0; transform: scale(1.06); filter: blur(8px); } to { opacity: 1; transform: none; filter: none; } }
+@keyframes fx-peacock-in {
+    0% { opacity: 0; transform: translate(-70%, 30%) scale(.5) rotate(-12deg); filter: brightness(2.2) blur(5px); }
+    55% { opacity: 1; }
+    100% { opacity: 1; transform: none; filter: brightness(1); }
+}
+@keyframes fx-peacock-glow {
+    0%, 100% { filter: brightness(1) saturate(1) drop-shadow(0 0 0 rgba(255,200,90,0)); }
+    50% { filter: brightness(1.32) saturate(1.2) drop-shadow(0 0 16px rgba(255,200,90,.6)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    .fx-layer { display: none; }
+}

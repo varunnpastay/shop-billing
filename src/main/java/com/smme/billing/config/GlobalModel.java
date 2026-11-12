@@ -14,10 +14,13 @@ public class GlobalModel {
 
     private final SettingService settingService;
     private final ShopLogoRepository logoRepo;
+    private final com.smme.billing.repository.ProductRepository productRepo;
 
-    public GlobalModel(SettingService settingService, ShopLogoRepository logoRepo) {
+    public GlobalModel(SettingService settingService, ShopLogoRepository logoRepo,
+                       com.smme.billing.repository.ProductRepository productRepo) {
         this.settingService = settingService;
         this.logoRepo = logoRepo;
+        this.productRepo = productRepo;
     }
 
     @ModelAttribute("shop")
@@ -34,6 +37,12 @@ public class GlobalModel {
     @ModelAttribute("currentPath")
     public String currentPath(HttpServletRequest request) {
         return request.getRequestURI().substring(request.getContextPath().length());
+    }
+
+    /** Number of items at or below their minimum stock (badge in the menu). */
+    @ModelAttribute("lowStockCount")
+    public long lowStockCount() {
+        return productRepo.countLowStock();
     }
 
     @ModelAttribute("mustChangePassword")

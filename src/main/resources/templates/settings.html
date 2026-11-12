@@ -97,6 +97,8 @@
             </tbody>
         </table>
         <p class="muted small card-pad" th:if="${#lists.isEmpty(backups)}">No backups yet.</p>
+        <p class="small card-pad"><b>To restore a backup:</b> close the app (the black window), then drag the backup .zip onto
+            <b>restore.bat</b> in the app folder and start the app again. Your current data is kept aside, so nothing is lost.</p>
     </div>
     <div class="card" th:unless="${backupSupported}">
         <p class="muted small" style="margin:0">You are using an external database (PostgreSQL/MySQL). Back it up every

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Purchases')}"></head>
+<body>
+<header th:replace="~{fragments :: nav}"></header>
+<main class="container">
+    <div th:replace="~{fragments :: flash}"></div>
+    <div class="page-head">
+        <h1>Purchases</h1>
+        <a class="btn primary" th:href="@{/purchases/new}">+ New Purchase</a>
+    </div>
+    <form class="card filters" th:action="@{/purchases}" method="get">
+        <label>From <input type="date" name="from" th:value="${from}"></label>
+        <label>To <input type="date" name="to" th:value="${to}"></label>
+        <button class="btn">Show</button>
+    </form>
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Date</th><th>Supplier</th><th>Invoice</th><th class="r">Items</th><th class="r">Total</th><th></th></tr></thead>
+            <tbody>
+            <tr th:each="p : ${purchases}">
+                <td th:text="${#temporals.format(p.purchaseDate, 'dd/MM/yyyy')}"></td>
+                <td><a th:href="@{/suppliers/{id}(id=${p.supplierId})}" th:text="${p.supplierName}"></a></td>
+                <td th:text="${p.invoiceNo}"></td>
+                <td class="r" th:text="${#lists.size(p.items)}"></td>
+                <td class="r" th:text="${@money.inr(p.total)}"></td>
+                <td class="r"><a class="btn sm" th:href="@{/purchases/{id}(id=${p.id})}">Open</a></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(purchases)}"><td colspan="6" class="muted">No purchases in this period.</td></tr>
+            </tbody>
+            <tfoot th:if="${!#lists.isEmpty(purchases)}">
+            <tr><th colspan="4" class="r">Total</th><th class="r" th:text="'₹ ' + ${@money.inr(total)}"></th><th></th></tr>
+            </tfoot>
+        </table>
+    </div>
+</main>
+</body>
+</html>

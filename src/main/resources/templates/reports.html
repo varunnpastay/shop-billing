@@ -4,14 +4,38 @@
 <body>
 <header th:replace="~{fragments :: nav}"></header>
 <main class="container">
-    <div class="page-head"><h1>Sales Report</h1></div>
+    <div class="page-head"><h1>Reports</h1>
+        <button class="btn" onclick="window.print()">Print / PDF</button></div>
+    <p class="print-only" th:text="${shop.shopName} + ' – ' + ${#temporals.format(from, 'dd/MM/yyyy')} + ' to ' + ${#temporals.format(to, 'dd/MM/yyyy')}"></p>
+    <nav class="tabs">
+        <a th:href="@{/reports(tab='sales',from=${from},to=${to})}" th:classappend="${tab == 'sales'} ? 'on'">Sales (bills)</a>
+        <a th:href="@{/reports(tab='summary',from=${from},to=${to})}" th:classappend="${tab == 'summary'} ? 'on'">Daily / Monthly / Yearly</a>
+        <a th:href="@{/reports(tab='items',from=${from},to=${to})}" th:classappend="${tab == 'items'} ? 'on'">Best Sellers</a>
+        <a th:href="@{/reports(tab='purchases',from=${from},to=${to})}" th:classappend="${tab == 'purchases'} ? 'on'">Purchases</a>
+        <a th:href="@{/reports(tab='stock',from=${from},to=${to})}" th:classappend="${tab == 'stock'} ? 'on'">Stock Value</a>
+        <a th:href="@{/reports(tab='profit',from=${from},to=${to})}" th:classappend="${tab == 'profit'} ? 'on'">Profit &amp; Loss</a>
+        <a th:href="@{/reports(tab='outstanding',from=${from},to=${to})}" th:classappend="${tab == 'outstanding'} ? 'on'">Outstanding</a>
+    </nav>
     <form class="card filters" th:action="@{/reports}" method="get">
+        <input type="hidden" name="tab" th:value="${tab}">
         <label>From <input type="date" name="from" th:value="${from}" required></label>
         <label>To <input type="date" name="to" th:value="${to}" required></label>
+        <label th:if="${tab == 'summary'}">Group by
+            <select name="group">
+                <option value="DAY" th:selected="${group == 'DAY'}">Day</option>
+                <option value="MONTH" th:selected="${group == 'MONTH'}">Month</option>
+                <option value="YEAR" th:selected="${group == 'YEAR'}">Year</option>
+            </select>
+        </label>
         <button class="btn">Show</button>
-        <a class="btn ghost" th:href="@{/reports/csv(from=${from},to=${to})}">⬇ Wholesale CSV</a>
-        <a class="btn ghost" th:href="@{/reports/local-csv(from=${from},to=${to})}">⬇ Local CSV</a>
+        <th:block th:if="${tab == 'sales'}">
+            <a class="btn ghost" th:href="@{/reports/csv(from=${from},to=${to})}">⬇ Wholesale Excel</a>
+            <a class="btn ghost" th:href="@{/reports/local-csv(from=${from},to=${to})}">⬇ Local Excel</a>
+        </th:block>
+        <a class="btn ghost" th:unless="${tab == 'sales'}" th:href="@{/reports/export(type=${tab},from=${from},to=${to},group=${group})}">⬇ Excel</a>
     </form>
+
+<div th:if="${tab == 'sales'}">
 
     <h2>Local Bills</h2>
     <div class="stats">
@@ -85,6 +109,110 @@
             </tfoot>
         </table>
     </div>
+</div>
+
+<div th:if="${tab == 'summary'}" class="card">
+    <table class="table">
+        <thead><tr><th>Period</th><th class="r">Bills</th><th class="r">Wholesale</th><th class="r">Local</th><th class="r">Total sales</th>
+            <th class="r">Received</th><th class="r">Expenses</th><th class="r">Paid out</th><th class="r">Net cash</th></tr></thead>
+        <tbody>
+        <tr th:each="r : ${rows}">
+            <td th:text="${r.label}"></td>
+            <td class="r" th:text="${r.bills}"></td>
+            <td class="r" th:text="${@money.inr(r.wholesale)}"></td>
+            <td class="r" th:text="${@money.inr(r.local)}"></td>
+            <td class="r"><b th:text="${@money.inr(r.total())}"></b></td>
+            <td class="r" th:text="${@money.inr(r.received)}"></td>
+            <td class="r" th:text="${@money.inr(r.expenses)}"></td>
+            <td class="r" th:text="${@money.inr(r.paidOut)}"></td>
+            <td class="r" th:classappend="${r.net().signum() < 0} ? 'neg'" th:text="${@money.inr(r.net())}"></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(rows)}"><td colspan="9" class="muted">Nothing in this period.</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<div th:if="${tab == 'items'}">
+    <div class="split">
+        <div class="card"><h3>By category</h3>
+            <ul class="mini-list"><li th:each="r : ${byCategory}"><span th:text="${r.name}"></span>
+                <span><span class="muted small" th:text="${@money.qty(r.qty)} + ' sold · '"></span><b th:text="${@money.inr(r.amount)}"></b></span></li>
+                <li th:if="${#lists.isEmpty(byCategory)}" class="muted">No sales.</li></ul></div>
+        <div class="card"><h3>By fabric</h3>
+            <ul class="mini-list"><li th:each="r : ${byFabric}"><span th:text="${r.name}"></span>
+                <span><span class="muted small" th:text="${@money.qty(r.qty)} + ' sold · '"></span><b th:text="${@money.inr(r.amount)}"></b></span></li>
+                <li th:if="${#lists.isEmpty(byFabric)}" class="muted">No sales.</li></ul></div>
+    </div>
+    <div class="card" style="margin-top:18px">
+        <h3>Best-selling items</h3>
+        <table class="table">
+            <thead><tr><th>#</th><th>Item</th><th class="r">Qty sold</th><th class="r">Sales amount</th></tr></thead>
+            <tbody>
+            <tr th:each="r, st : ${items}">
+                <td th:text="${st.count}"></td><td th:text="${r.name}"></td>
+                <td class="r" th:text="${@money.qty(r.qty)}"></td><td class="r" th:text="${@money.inr(r.amount)}"></td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(items)}"><td colspan="4" class="muted">No sales in this period.</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div th:if="${tab == 'purchases'}" class="card">
+    <table class="table">
+        <thead><tr><th>Date</th><th>Supplier</th><th>Invoice</th><th class="r">Items</th><th class="r">Total</th></tr></thead>
+        <tbody>
+        <tr th:each="p : ${purchases}">
+            <td th:text="${#temporals.format(p.purchaseDate, 'dd/MM/yyyy')}"></td>
+            <td th:text="${p.supplierName}"></td>
+            <td><a th:href="@{/purchases/{id}(id=${p.id})}" th:text="${p.invoiceNo ?: 'Open'}"></a></td>
+            <td class="r" th:text="${#lists.size(p.items)}"></td>
+            <td class="r" th:text="${@money.inr(p.total)}"></td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(purchases)}"><td colspan="5" class="muted">No purchases in this period.</td></tr>
+        </tbody>
+        <tfoot th:if="${!#lists.isEmpty(purchases)}"><tr><th colspan="4" class="r">Total</th>
+            <th class="r" th:text="'₹ ' + ${@money.inr(purchaseTotal)}"></th></tr></tfoot>
+    </table>
+</div>
+
+<div th:if="${tab == 'stock'}">
+    <div class="stats">
+        <div class="stat hero"><span class="muted">Stock value (purchase price)</span><strong th:text="'₹ ' + ${@money.inr(stock.value)}"></strong></div>
+        <div class="stat"><span class="muted">At selling price</span><strong th:text="'₹ ' + ${@money.inr(stock.saleValue)}"></strong></div>
+        <div class="stat"><span class="muted">Items / pieces</span><strong th:text="${stock.items} + ' / ' + ${@money.qty(stock.qty)}"></strong></div>
+        <div class="stat warn"><span class="muted">Low stock</span><strong th:text="${#lists.size(stock.low)}"></strong></div>
+    </div>
+    <p class="small muted">Stock value is as of today (dates do not apply).</p>
+    <div class="card">
+        <table class="table">
+            <thead><tr><th>Item</th><th>Category</th><th class="r">Stock</th><th class="r">Min</th><th class="r">Purchase</th><th class="r">Value</th></tr></thead>
+            <tbody>
+            <tr th:each="p : ${products}">
+                <td th:text="${p.name}"></td><td th:text="${p.category}"></td>
+                <td class="r" th:classappend="${p.lowStock} ? 'neg'" th:text="${@money.qty(p.stock())}"></td>
+                <td class="r" th:text="${@money.qty(p.minStock)}"></td>
+                <td class="r" th:text="${p.purchasePrice != null} ? ${@money.inr(p.purchasePrice)} : ''"></td>
+                <td class="r" th:text="${@money.inr(p.stockValue())}"></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div th:if="${tab == 'profit'}">
+    <div th:replace="~{accounts :: pl}"></div>
+</div>
+
+<div th:if="${tab == 'outstanding'}" class="split">
+    <div class="card"><h3>Customers owe us – <span th:text="'₹ ' + ${@money.inr(receivables)}"></span></h3>
+        <ul class="mini-list"><li th:each="e : ${customers}"><span th:text="${e.key}"></span><b th:text="${@money.inr(e.value)}"></b></li>
+            <li th:if="${#lists.isEmpty(customers)}" class="muted">Nothing due.</li></ul></div>
+    <div class="card"><h3>We owe suppliers – <span th:text="'₹ ' + ${@money.inr(payables)}"></span></h3>
+        <ul class="mini-list"><li th:each="r : ${suppliers}" th:if="${r.balance.signum() != 0}"><span th:text="${r.supplier.name}"></span>
+            <b th:text="${@money.inr(r.balance)}"></b></li>
+            <li th:if="${payables.signum() == 0}" class="muted">Nothing due.</li></ul></div>
+</div>
 </main>
 </body>
 </html>

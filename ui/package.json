@@ -1,0 +1,12 @@
+{
+  "name": "shop-billing-ui",
+  "private": true,
+  "description": "Builds src/main/resources/static/css/app.css with Tailwind CSS. Only needed when changing the look; the built file is committed.",
+  "scripts": {
+    "build": "tailwindcss -c tailwind.config.js -i app.css -o ../src/main/resources/static/css/app.css --minify",
+    "watch": "tailwindcss -c tailwind.config.js -i app.css -o ../src/main/resources/static/css/app.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.17"
+  }
+}

@@ -37,10 +37,10 @@
                 <td th:text="${b.billType}"></td>
                 <td class="r" th:text="${#numbers.formatDecimal(b.grandTotal, 1, 'COMMA', 2, 'POINT')}"></td>
                 <td><span th:replace="~{fragments :: status(${b})}"></span></td>
-                <td class="r nowrap">
-                    <a th:href="@{/bills/{id}(id=${b.id})}">Open</a> ·
-                    <a th:href="@{/bills/{id}/print(id=${b.id})}" target="_blank">Print</a>
-                </td>
+                <td><div class="row-actions">
+                    <a class="btn sm primary" th:href="@{/bills/{id}/print(id=${b.id})}" target="_blank"><svg th:replace="~{fragments :: printer}"></svg> Print</a>
+                    <a class="btn sm" th:href="@{/bills/{id}(id=${b.id})}">Open</a>
+                </div></td>
             </tr>
             <tr th:if="${#lists.isEmpty(bills)}"><td colspan="7" class="muted">No bills found.</td></tr>
             </tbody>

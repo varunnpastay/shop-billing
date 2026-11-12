@@ -7,31 +7,44 @@
     <div th:replace="~{fragments :: flash}"></div>
     <div class="page-head">
         <h1>Customers</h1>
-        <a class="btn primary" th:href="@{/customers/new}">+ Add Customer</a>
+        <div class="btn-row">
+            <a class="btn" th:href="@{/customers/outstanding}">Payment Reminders</a>
+            <a class="btn primary" th:href="@{/customers/new}">+ Add Customer</a>
+        </div>
     </div>
     <form class="card filters" th:action="@{/customers}" method="get">
         <label>Search <input name="q" th:value="${q}" placeholder="Customer name"></label>
+        <label>Type
+            <select name="type">
+                <option value="">All</option>
+                <option value="RETAIL" th:selected="${type == 'RETAIL'}">Retail</option>
+                <option value="WHOLESALE" th:selected="${type == 'WHOLESALE'}">Wholesale</option>
+            </select>
+        </label>
         <button class="btn">Search</button>
     </form>
     <div class="card">
         <table class="table">
-            <thead><tr><th>Name</th><th>Address</th><th>GSTIN</th><th>Phone</th><th></th></tr></thead>
+            <thead><tr><th>Name</th><th>Type</th><th>Phone</th><th>GSTIN</th><th class="r">Outstanding</th><th></th></tr></thead>
             <tbody>
-            <tr th:each="c : ${customers}">
-                <td th:text="${c.name}"></td>
-                <td th:text="${c.address}"></td>
-                <td th:text="${c.gstin}"></td>
+            <tr th:each="c : ${customers}" th:with="owe=${due.get(c.name)}">
+                <td><a th:href="@{/customers/{id}(id=${c.id})}"><b th:text="${c.name}"></b></a>
+                    <div class="small muted" th:text="${c.address}"></div></td>
+                <td><span class="badge navy" th:if="${c.customerType == 'WHOLESALE'}">Wholesale</span>
+                    <span class="badge grey" th:if="${c.customerType == 'RETAIL'}">Retail</span></td>
                 <td th:text="${c.phone}"></td>
+                <td th:text="${c.gstin}"></td>
+                <td class="r"><b class="neg" th:if="${owe != null}" th:text="${@money.inr(owe)}"></b></td>
                 <td class="r nowrap">
-                    <a th:href="@{/bills(q=${c.name})}">Bills</a> ·
-                    <a th:href="@{/customers/{id}/edit(id=${c.id})}">Edit</a> ·
+                    <a class="btn sm" th:href="@{/customers/{id}(id=${c.id})}">Open</a>
+                    <a class="btn sm" th:href="@{/customers/{id}/edit(id=${c.id})}">Edit</a>
                     <form class="inline" th:action="@{/customers/{id}/delete(id=${c.id})}" method="post"
-                          onsubmit="return confirm('Delete this customer?')">
-                        <button class="link danger">Delete</button>
+                          onsubmit="return confirm('Delete this customer? Their bills are kept.')">
+                        <button class="btn sm danger">Delete</button>
                     </form>
                 </td>
             </tr>
-            <tr th:if="${#lists.isEmpty(customers)}"><td colspan="5" class="muted">No customers. They are also added automatically when you save a bill.</td></tr>
+            <tr th:if="${#lists.isEmpty(customers)}"><td colspan="6" class="muted">No customers. They are also added automatically when you save a bill.</td></tr>
             </tbody>
         </table>
     </div>

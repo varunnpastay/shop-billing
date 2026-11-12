@@ -38,23 +38,19 @@
                 <td class="r" th:text="${#numbers.formatDecimal(b.totalSale, 1, 'COMMA', 2, 'POINT')}"></td>
                 <td class="r" th:text="${#numbers.formatDecimal(b.totalSavings, 1, 'COMMA', 2, 'POINT')}"></td>
                 <td class="r" th:text="${#numbers.formatDecimal(b.netPayable, 1, 'COMMA', 2, 'POINT')}"></td>
-                <td class="r nowrap">
-                    <a th:href="@{/local/{id}(id=${b.id})}">Open</a>
-                    <span th:unless="${b.cancelled}"> ·
-                        <a th:href="@{/local/{id}(id=${b.id},print=true)}" target="_blank">Print</a> ·
-                        <form class="inline" th:action="@{/local/{id}/cancel(id=${b.id})}" method="post"
-                              onsubmit="return confirm('Cancel this bill?')">
-                            <input type="hidden" name="value" value="true">
-                            <button class="link danger">Cancel</button>
-                        </form>
-                    </span>
-                    <span th:if="${b.cancelled}"> ·
-                        <form class="inline" th:action="@{/local/{id}/cancel(id=${b.id})}" method="post">
-                            <input type="hidden" name="value" value="false">
-                            <button class="link">Restore</button>
-                        </form>
-                    </span>
-                </td>
+                <td><div class="row-actions">
+                    <a th:unless="${b.cancelled}" class="btn sm primary" th:href="@{/local/{id}(id=${b.id},print=true)}" target="_blank"><svg th:replace="~{fragments :: printer}"></svg> Print</a>
+                    <a class="btn sm" th:href="@{/local/{id}(id=${b.id})}">Open</a>
+                    <form th:unless="${b.cancelled}" th:action="@{/local/{id}/cancel(id=${b.id})}" method="post"
+                          onsubmit="return confirm('Cancel this bill?')">
+                        <input type="hidden" name="value" value="true">
+                        <button class="btn sm danger">Cancel</button>
+                    </form>
+                    <form th:if="${b.cancelled}" th:action="@{/local/{id}/cancel(id=${b.id})}" method="post">
+                        <input type="hidden" name="value" value="false">
+                        <button class="btn sm">Restore</button>
+                    </form>
+                </div></td>
             </tr>
             <tr th:if="${#lists.isEmpty(bills)}"><td colspan="8" class="muted">No local bills found.</td></tr>
             </tbody>

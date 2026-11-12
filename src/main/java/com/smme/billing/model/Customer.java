@@ -19,6 +19,11 @@ public class Customer {
     private String gstin;
     private String phone;
     private String stateName;
+    /** RETAIL or WHOLESALE */
+    private String customerType;
+
+    public String getCustomerType() { return customerType; }
+    public void setCustomerType(String customerType) { this.customerType = customerType; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

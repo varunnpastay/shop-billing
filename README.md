@@ -15,8 +15,16 @@ It runs in a web browser, and the data is stored in the database.
 - **Printing:** full-page A4 or A5 bill with your shop logo, Original and Duplicate copies, and *Save as PDF*.
 - **Customers and items:** saved lists that fill in automatically while you bill. New customers are saved automatically.
 - **Bill tools:** search by bill number, customer, date or status. Edit, copy to a new bill, cancel and restore bills.
-- **Dashboard:** today's and this month's local and wholesale sales, GST collected and pending credit.
-- **Reports:** local sales and wholesale GST report for any period, each with export to Excel (CSV).
+- **Items and stock:** item code, category, saree type, fabric, colour, design, photo and barcode; purchase, selling, wholesale and MRP prices; stock in pieces and bundles with a minimum-stock alert. Stock goes down with every local and wholesale bill, comes back when a bill is cancelled or goods are returned, and goes up with purchases. Manual corrections ("Adjust stock") need a reason. Search by name, code, category, fabric, colour or barcode.
+- **Wholesale pricing:** picking an item on a wholesale bill fills its wholesale price; local bills use the selling price.
+- **Payment method:** Cash, UPI or Bank transfer on every bill, payment and expense.
+- **Purchases and suppliers:** record supplier invoices (stock goes up), payments made to suppliers, and the balance still owed to each supplier.
+- **Customer accounts:** retail or wholesale type, full bill history, payments received (set against the oldest credit bills first), outstanding balance, and a **Payment Reminders** list with one-click WhatsApp reminders.
+- **Returns:** goods brought back by a customer go back into stock; the refund is taken off sales.
+- **Expenses and accounts:** rent, electricity, transport and other expenses; **Accounts & Profit** shows money received and paid out by Cash / UPI / Bank, a daily income-and-expense table, an estimated profit and loss (sales − cost of goods − expenses), money to collect and money to pay.
+- **Activity history:** price changes, stock adjustments, bill cancellations, deletions and payments are recorded with date, time and user.
+- **Dashboard:** today, this month and this year sales, stock value, low-stock alerts, purchases and expenses, estimated profit, money to collect and to pay, and best-selling items.
+- **Reports:** bills (local and wholesale GST), daily / monthly / yearly sales, best sellers (by item, category and fabric), purchases, stock valuation, profit and loss, and customer / supplier outstanding. Every report exports to Excel (CSV) and prints or saves as PDF.
 - **Shop settings:** name, address, GSTIN, bank details, terms, starting bill numbers (wholesale and local), logo upload, and the local receipt text (title, line under shop name, declaration, footer, Instagram ID, UPI ID for the QR code).
 - **Security:** passwords stored with BCrypt, the default password must be changed on first login, protection against cross-site requests, and 8-hour sessions.
 
@@ -73,7 +81,7 @@ Other computers on the same network can open `http://<this-computer's-IP>:8080`.
 
 **Built-in database (default):** a backup is made automatically every day the app runs, into the `backups` folder (the newest 30 are kept). **Settings → Backup** has a *Backup now* button and download links. Copy a backup to a pen drive or Google Drive every week – a backup on the same computer does not help if the computer's disk fails.
 
-To restore: close the app, delete `data/billingdb.mv.db`, unzip the backup into the `data` folder, and start the app again.
+To restore: close the app (the black window), drag the backup `.zip` from the `backups` folder onto **restore.bat**, then start the app again. The current data is kept in a `data_before_restore_<date-time>` folder, so nothing is lost.
 
 **PostgreSQL:** back up daily with
 
@@ -82,6 +90,20 @@ pg_dump -U postgres -F c -f shop_billing_backup.dump shop_billing
 ```
 
 and restore with `pg_restore -U postgres -d shop_billing --clean shop_billing_backup.dump`.
+
+## Changing the look (Tailwind CSS)
+
+The screens are styled with [Tailwind CSS](https://tailwindcss.com). The finished stylesheet
+`src/main/resources/static/css/app.css` is already built and committed, so the shop computer needs
+nothing extra. Only when you change the look:
+
+```
+cd ui
+npm install        (first time only, needs Node.js)
+npm run build      (rebuilds src/main/resources/static/css/app.css)
+```
+
+Edit `ui/app.css` (and the templates); then run `npm run build` and `mvn package`.
 
 ## Running the tests
 
