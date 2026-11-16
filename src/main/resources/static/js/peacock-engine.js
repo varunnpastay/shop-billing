@@ -10,7 +10,10 @@
   // Small WebGL helpers (WebGL2 when available, WebGL1 fallback; GLSL ES 1.00 shaders work in both).
 
   function createContext(canvas) {
-    const opts = { alpha: true, premultipliedAlpha: true, antialias: true, depth: false, stencil: false };
+    // no anti-aliasing: the edges come from the soft image layers, so it looks the same and saves a lot of graphics work;
+    // ask for the faster graphics chip on laptops that have two
+    const opts = { alpha: true, premultipliedAlpha: true, antialias: false, depth: false, stencil: false,
+                   powerPreference: "high-performance" };
     let gl = canvas.getContext('webgl2', opts);
     const isGL2 = !!gl;
     if (!gl) gl = canvas.getContext('webgl', opts) || canvas.getContext('experimental-webgl', opts);
@@ -959,10 +962,13 @@
     }
 
     let hidden = false;
+    // render quality: lowered automatically on slow computers (see setQuality / peacock-login.js)
+    let maxDpr = 1;
+    let maxBlurSamples = 1;   // 1 = no motion blur (smoothest); setQuality can raise it
     function frame(dtIn) {
       const dt = Math.max(0, dtIn);
       time += dt;
-      fitCanvas(canvas, gl);
+      fitCanvas(canvas, gl, maxDpr);
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
@@ -997,7 +1003,7 @@
       const k = Math.abs(cur.sy);
       const disp = Math.hypot((cur.tx - prevRoot.tx) * map.s, (cur.ty - prevRoot.ty) * map.s) + Math.abs(cur.sy - prevRoot.sy) * 150 * map.s;
       const wingDisp = Math.abs(flapPhase - phase0) * 0.7 * 120 * map.s * k * ctl.flap;
-      const N = ctl.blur > 0 ? clamp(Math.ceil(Math.max(disp, wingDisp) * ctl.blur / 9), 1, 5) : 1;
+      const N = ctl.blur > 0 ? clamp(Math.ceil(Math.max(disp, wingDisp) * ctl.blur / 9), 1, maxBlurSamples) : 1;
       const target = N > 1 ? ensureFbo() : null;
 
       useLayerProgram();
@@ -1090,6 +1096,12 @@
       },
       getMap: () => (updateMap(), map),
       setHidden: (h) => (hidden = h),
+      /** Lighter drawing for slow computers: fewer motion-blur samples and fewer pixels. */
+      setQuality: (q) => {
+        if (q.maxDpr) maxDpr = q.maxDpr;
+        if (q.blurSamples) maxBlurSamples = q.blurSamples;
+        if (q.blurSamples === 1) ctl.blur = 0;
+      },
     };
   }
 

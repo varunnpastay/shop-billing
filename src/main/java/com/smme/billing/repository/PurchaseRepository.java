@@ -9,5 +9,4 @@ import java.util.List;
 public interface PurchaseRepository extends JpaRepository<Purchase, Long> {
     List<Purchase> findByPurchaseDateBetweenOrderByPurchaseDateDescIdDesc(LocalDate from, LocalDate to);
     List<Purchase> findBySupplierIdOrderByPurchaseDateDescIdDesc(Long supplierId);
-    List<Purchase> findAllByOrderByPurchaseDateDescIdDesc();
 }

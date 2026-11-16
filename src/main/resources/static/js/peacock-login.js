@@ -86,9 +86,23 @@
       const stage = await window.SVTPeacock.createPeacockStage(canvas, () => plate.getBoundingClientRect(),
           { rigData: rigData, body: d.body, wing: d.wing, saree: d.saree });
       const chor = window.SVTPeacock.createChoreography(stage, { reducedMotion: reduce });
+
+      // warm-up: draw a few invisible frames first, so the graphics are ready before the flight (no hitch at the start)
+      stage.ctl.peacockAlpha = 0;
+      stage.ctl.sareeAlpha = 0;
+      for (let i = 0; i < 4; i++) {
+        await new Promise((ok) => requestAnimationFrame(ok));
+        stage.frame(1 / 60);
+      }
+      stage.ctl.peacockAlpha = 1;
+      stage.ctl.sareeAlpha = 1;
+
       tick = (_t, deltaMs) => stage.frame(Math.min(deltaMs, 50) / 1000);
       gsap.ticker.add(tick);
       api = { stage: stage, chor: chor };
+      // the background stars hold still during the flight, leaving the computer more time for the peacock
+      document.body.classList.add("pk-flying");
+      setTimeout(() => document.body.classList.remove("pk-flying"), 3300);
       chor.flyIn();   // flows straight into idle life when it lands
     } catch (err) {
       console.warn("[peacock] falling back to the static logo:", err);

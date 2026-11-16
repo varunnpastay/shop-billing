@@ -275,7 +275,10 @@
     .pos { @apply text-[#157347]; }
     .neg { @apply text-red-700; }
 
-    .error-card { @apply p-8 text-center; }
+    /* error page (page not found, not allowed, ...) */
+    .error-page { @apply flex min-h-screen items-center justify-center p-4; }
+    .error-card { @apply m-0 w-full max-w-[440px] p-8 text-center; }
+    .error-logo { @apply mx-auto mb-4 h-16 w-16; }
 
     /* ---------------- settings ---------------- */
     label.check { @apply flex-row items-center gap-2.5 font-medium text-ink; }

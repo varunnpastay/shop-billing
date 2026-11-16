@@ -7,9 +7,9 @@
     <link rel="icon" type="image/svg+xml" th:href="@{/img/logo.svg}">
     <link rel="stylesheet" th:href="@{/css/app.css}">
 </head>
-<body class="login-body">
-<div class="card login-card error-card">
-    <img th:src="@{/img/logo.svg}" alt="" class="login-logo">
+<body class="error-page">
+<div class="card error-card">
+    <img th:src="@{/img/logo.svg}" alt="" class="error-logo">
     <h2 th:switch="${status}">
         <span th:case="404">Page not found</span>
         <span th:case="403">Not allowed</span>

@@ -1,6 +1,5 @@
 package com.smme.billing.service;
 
-import com.smme.billing.model.Product;
 import com.smme.billing.repository.ProductRepository;
 import org.springframework.stereotype.Service;
 
@@ -44,9 +43,4 @@ public class StockService {
         m.merge(name.trim().toLowerCase(), qty, BigDecimal::add);
     }
 
-    /** Purchase price of the item with this name, or null. */
-    public BigDecimal costOf(String name, Map<String, Product> byName) {
-        Product p = name == null ? null : byName.get(name.trim().toLowerCase());
-        return p == null ? null : p.getPurchasePrice();
-    }
 }

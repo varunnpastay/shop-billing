@@ -38,10 +38,15 @@ public class SecurityFilter extends OncePerRequestFilter {
     private static boolean sameHost(String url, HttpServletRequest req) {
         try {
             URI u = URI.create(url.trim());
+            String origin = u.getHost() + (u.getPort() == -1 ? "" : ":" + u.getPort());
             String host = req.getHeader("Host");
             if (host == null) host = req.getServerName() + ":" + req.getServerPort();
-            String origin = u.getHost() + (u.getPort() == -1 ? "" : ":" + u.getPort());
-            return host.equalsIgnoreCase(origin) || host.equalsIgnoreCase(u.getHost());
+            if (host.equalsIgnoreCase(origin) || host.equalsIgnoreCase(u.getHost())) return true;
+            // behind a proxy (Tailscale serve, Caddy) the address the browser used may arrive as X-Forwarded-Host
+            String fwd = req.getHeader("X-Forwarded-Host");
+            if (fwd == null || fwd.isBlank()) return false;
+            fwd = fwd.split(",")[0].trim();
+            return fwd.equalsIgnoreCase(origin) || fwd.equalsIgnoreCase(u.getHost());
         } catch (IllegalArgumentException e) {
             return false;
         }

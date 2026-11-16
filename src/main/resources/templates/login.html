@@ -7,6 +7,11 @@
     <title th:text="'Login | ' + ${shop.shopName}">Login</title>
     <link rel="icon" type="image/svg+xml" th:href="@{/img/logo.svg}">
     <link rel="stylesheet" th:href="@{/css/peacock-login.css}">
+    <!-- start downloading the peacock layers straight away, so the flight can begin sooner -->
+    <link rel="preload" as="image" th:href="@{/img/peacock/logo-plate.webp}">
+    <link rel="preload" as="image" th:href="@{/img/peacock/body.webp}">
+    <link rel="preload" as="image" th:href="@{/img/peacock/wing.webp}">
+    <link rel="preload" as="image" th:href="@{/img/peacock/saree.webp}">
 </head>
 <body th:data-rig="@{/img/peacock/rig.json}" th:data-body="@{/img/peacock/body.webp}"
       th:data-wing="@{/img/peacock/wing.webp}" th:data-saree="@{/img/peacock/saree.webp}">

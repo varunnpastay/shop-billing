@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 /**
  * Backups of the built-in (H2) database: one automatically every day the app runs, plus "Backup now" in Settings.
  * Each backup is a zip in the backups folder; the newest {@code backup.keep} are kept.
- * For PostgreSQL / MySQL use the database's own tools (pg_dump) – see README.
  */
 @Service
 public class BackupService {
@@ -86,6 +85,16 @@ public class BackupService {
         log.info("Database backup written to {}", file);
         prune();
         return file;
+    }
+
+    /** Writes a full database backup to the given file (used by the daily export to GitHub). */
+    public synchronized void backupTo(Path file) throws IOException {
+        if (!h2) throw new IllegalStateException("Database backup works only with the built-in database");
+        Files.createDirectories(file.getParent());
+        Path tmp = file.resolveSibling(file.getFileName() + ".tmp");
+        Files.deleteIfExists(tmp);
+        jdbc.execute("BACKUP TO '" + tmp.toString().replace("\\", "/").replace("'", "''") + "'");
+        Files.move(tmp, file, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
     }
 
     public List<BackupFile> list() {

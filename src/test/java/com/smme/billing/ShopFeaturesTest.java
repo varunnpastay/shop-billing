@@ -162,5 +162,14 @@ class ShopFeaturesTest {
         }
         mvc.perform(get("/reports").param("tab", "items").session(s)).andExpect(content().string(containsString("Mysore Silk Saree")));
         mvc.perform(get("/reports/export").param("type", "../etc").session(s)).andExpect(status().isNotFound());
+
+        // behind Tailscale serve / Caddy the browser's address may arrive as X-Forwarded-Host: allowed;
+        // a post from another site is still blocked
+        mvc.perform(post("/expenses").session(s).header("Origin", "https://shop-pc.tail1234.ts.net")
+                        .header("X-Forwarded-Host", "shop-pc.tail1234.ts.net").param("category", "Tea / Snacks").param("amount", "20"))
+                .andExpect(status().is3xxRedirection());
+        mvc.perform(post("/expenses").session(s).header("Origin", "https://evil.example.com")
+                        .header("X-Forwarded-Host", "shop-pc.tail1234.ts.net").param("category", "Tea / Snacks").param("amount", "20"))
+                .andExpect(status().isForbidden());
     }
 }

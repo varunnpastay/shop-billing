@@ -31,12 +31,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 /**
- * Daily Excel export of all shop data, pushed to a PRIVATE GitHub repository.
+ * Daily off-computer backup: an Excel export of all shop data plus a full database backup, pushed to a PRIVATE
+ * GitHub repository.
  *
- * Every day (at {@code export.cron}, and once shortly after the app starts if today's file is missing) the app writes
- * one workbook with a sheet per kind of record, saves it in a local copy of the data repository
- * ({@code export.dir}, by default ./data-export) as YYYY/MM/shop-data-YYYY-MM-DD.xlsx plus latest.xlsx, then runs
- * git add / commit / push. The repository link is set on the Settings page. git must be installed and signed in to
+ * At {@code export.cron} (1 PM and 8 PM) and once shortly after the app starts if today's file is missing, the app
+ * writes one workbook with a sheet per kind of record (YYYY/MM/shop-data-YYYY-MM-DD.xlsx plus latest.xlsx, to read)
+ * and a database backup (database/shop-billing-database.zip, which restore.bat loads back into the app) into a local
+ * copy of the data repository ({@code export.dir}, by default ./data-export), then runs git add / commit / push. The repository link is set on the Settings page. git must be installed and signed in to
  * GitHub on this computer (it already is if `git push` works here). Without a link the file is still written locally.
  */
 @Service
@@ -58,6 +59,7 @@ public class DataExportService {
     private final ExpenseRepository expenses;
     private final SalesReturnRepository returns;
     private final ActivityService activity;
+    private final BackupService backups;
     private final TransactionTemplate readTx;
     private final Path dir;
 
@@ -70,7 +72,8 @@ public class DataExportService {
     public DataExportService(SettingService settings, ProductRepository products, CustomerRepository customers,
                              SupplierRepository suppliers, BillRepository bills, LocalBillRepository localBills,
                              PurchaseRepository purchases, PaymentRepository payments, ExpenseRepository expenses,
-                             SalesReturnRepository returns, ActivityService activity, PlatformTransactionManager txManager,
+                             SalesReturnRepository returns, ActivityService activity, BackupService backups,
+                             PlatformTransactionManager txManager,
                              @Value("${export.dir:./data-export}") String dir) {
         this.settings = settings;
         this.products = products;
@@ -83,6 +86,7 @@ public class DataExportService {
         this.expenses = expenses;
         this.returns = returns;
         this.activity = activity;
+        this.backups = backups;
         this.readTx = new TransactionTemplate(txManager);
         this.readTx.setReadOnly(true);
         this.dir = Paths.get(dir).toAbsolutePath().normalize();
@@ -94,8 +98,8 @@ public class DataExportService {
 
     // ------------------------------------------------------------------ schedule --
 
-    /** Every evening (default 8 PM). */
-    @Scheduled(cron = "${export.cron:0 0 20 * * *}")
+    /** Twice a day (default 1 PM and 8 PM). */
+    @Scheduled(cron = "${export.cron:0 0 13,20 * * *}")
     public void daily() {
         run("daily");
     }
@@ -119,6 +123,8 @@ public class DataExportService {
             Files.createDirectories(file.getParent());
             writeWorkbook(file);
             Files.copy(file, latestFile(), StandardCopyOption.REPLACE_EXISTING);
+            // the full database too, so everything can be restored into the app (drop it on restore.bat)
+            if (backups.isSupported()) backups.backupTo(dir.resolve("database/shop-billing-database.zip"));
             String rel = dir.relativize(file).toString().replace('\\', '/');
             if (url == null) {
                 s = new Status(LocalDateTime.now(), true, "Excel file saved on this computer. Add the GitHub link to also push it.", rel);
@@ -176,8 +182,12 @@ public class DataExportService {
         }
         Path readme = dir.resolve("README.md");
         if (!Files.exists(readme)) {
-            Files.writeString(readme, "# Shop data\n\nDaily Excel export of the billing app (one workbook per day under YYYY/MM/, "
-                    + "and latest.xlsx). Keep this repository PRIVATE: it contains customer details.\n", StandardCharsets.UTF_8);
+            Files.writeString(readme, "# Shop data\n\nDaily backup of the billing app. Keep this repository PRIVATE: it contains "
+                    + "customer details.\n\n"
+                    + "- `YYYY/MM/shop-data-YYYY-MM-DD.xlsx` and `latest.xlsx`: all data as Excel, to read.\n"
+                    + "- `database/shop-billing-database.zip`: the full database. To restore it: close the app, download "
+                    + "this file, drag it onto restore.bat in the app folder, then start the app again. Older versions are "
+                    + "in the history of this file.\n", StandardCharsets.UTF_8);
         }
     }
 

@@ -16,8 +16,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Fills the shop with example data so every screen has something to show.
- * Runs only when the app is started with  --sample-data=true  and only once (it stops if the sample suppliers exist).
+ * Test data: fills the shop with example items, customers, suppliers, bills, purchases, payments, expenses and returns,
+ * so SampleDataTest can open every screen with real content. Active only when the property sample-data=true is set
+ * (SampleDataTest sets it), and only once (it stops if the sample suppliers exist).
  * Everything goes through the same services the screens use, so stock, balances and the activity log stay consistent.
  */
 @Component
