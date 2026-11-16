@@ -91,6 +91,19 @@ pg_dump -U postgres -F c -f shop_billing_backup.dump shop_billing
 
 and restore with `pg_restore -U postgres -d shop_billing --clean shop_billing_backup.dump`.
 
+## Daily Excel backup to GitHub
+
+Every evening at 8 PM (and once a few minutes after the app starts, if that day's file is missing) the app saves all
+shop data as one Excel workbook (sheets: Items, Customers, Suppliers, Wholesale Bills + lines, Local Bills + lines,
+Purchases + lines, Payments, Expenses, Returns) and pushes it to a **private** GitHub repository.
+
+1. On GitHub create a new repository, e.g. `shop-billing-data`, and choose **Private** (it holds customer details).
+2. In the app: **Settings → Daily Excel backup to GitHub**, paste the link and press **Save link**, then **Export & push now**.
+
+Files go to `data-export/YYYY/MM/shop-data-YYYY-MM-DD.xlsx` (plus `latest.xlsx`), a local copy of that repository next
+to the app. git must be installed and signed in to GitHub on the shop computer. Change the time with
+`EXPORT_CRON` in `db.properties` (Spring cron, default `0 0 20 * * *`). Without a link the file is only saved locally.
+
 ## Changing the look (Tailwind CSS)
 
 The screens are styled with [Tailwind CSS](https://tailwindcss.com). The finished stylesheet

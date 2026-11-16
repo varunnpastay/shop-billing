@@ -3,7 +3,10 @@ package com.smme.billing;
 import com.smme.billing.controller.AuthController;
 import com.smme.billing.model.*;
 import com.smme.billing.repository.*;
+import com.smme.billing.service.DataExportService;
 import com.smme.billing.service.InsightService;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -36,6 +39,7 @@ class SampleDataTest {
     @Autowired CustomerRepository customerRepo;
     @Autowired PurchaseRepository purchaseRepo;
     @Autowired InsightService insights;
+    @Autowired DataExportService export;
 
     private BigDecimal stockOf(String name) {
         return productRepo.findFirstByNameIgnoreCase(name).orElseThrow().stock();
@@ -123,5 +127,27 @@ class SampleDataTest {
         mvc.perform(get("/returns").session(s)).andExpect(content().string(containsString("Colour not liked")));
         mvc.perform(get("/activity").session(s)).andExpect(content().string(containsString("Sample data added")));
         mvc.perform(get("/customers/outstanding").session(s)).andExpect(content().string(containsString("Sri Ganesh Cloth Stores")));
+
+        // the daily Excel export has a sheet per kind of record, with every row
+        java.nio.file.Path xlsx = java.nio.file.Files.createTempFile("shop-data", ".xlsx");
+        export.writeWorkbook(xlsx);
+        try (Workbook wb = WorkbookFactory.create(xlsx.toFile())) {
+            for (String sheet : new String[]{"Summary", "Items", "Customers", "Suppliers", "Wholesale Bills", "Wholesale Bill Lines",
+                    "Local Bills", "Local Bill Lines", "Purchases", "Purchase Lines", "Payments", "Expenses", "Returns"})
+                assertNotNull(wb.getSheet(sheet), "sheet " + sheet);
+            assertEquals(productRepo.count(), wb.getSheet("Items").getLastRowNum());
+            assertEquals(billRepo.count(), wb.getSheet("Wholesale Bills").getLastRowNum());
+            assertEquals(localRepo.count(), wb.getSheet("Local Bills").getLastRowNum());
+            assertEquals("Mysore Silk Saree", wb.getSheet("Items").getRow(findRow(wb.getSheet("Items"), "Mysore Silk Saree")).getCell(0).getStringCellValue());
+        } finally {
+            java.nio.file.Files.deleteIfExists(xlsx);
+        }
+        mvc.perform(post("/settings/export/link").session(s).param("url", "not a link"))
+                .andExpect(flash().attribute("err", containsString("https://github.com/")));
+    }
+
+    private static int findRow(org.apache.poi.ss.usermodel.Sheet sh, String name) {
+        for (int i = 1; i <= sh.getLastRowNum(); i++) if (name.equals(sh.getRow(i).getCell(0).getStringCellValue())) return i;
+        throw new AssertionError(name + " not in sheet " + sh.getSheetName());
     }
 }

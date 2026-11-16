@@ -4,7 +4,7 @@
    Designed to be easy to read and use: large text, large buttons, high contrast,
    every action shown as a labelled button.
    ========================================================================== */
-@import "./fx.css";   /* animations & graphics (dashboard banner, login page) */
+@import "./fx.css";   /* animations & graphics (dashboard) */
 
 @tailwind base;
 @tailwind components;
@@ -177,13 +177,35 @@
     .filters label { @apply m-0 min-w-[170px] flex-1; }
 
     /* ---------------- dashboard ---------------- */
-    /* The artwork (1536 x 1024) fills the whole box. The box is 16:9, so a strip is trimmed top and bottom;
-       background-position-y 31% trims 50 px of the picture at the top. The animated pieces on top use
-       percentages of this box: x = picture x / 1536, y = (picture y - 50) / 864. */
+    /* Banner: shop name on the left, Lakshmi on the right. The right box shows part of the artwork
+       (1536 x 1024): x 130-1360, y 10-530, i.e. the arch, both lamps, Lakshmi and the lotus. The animated pieces on
+       it use percentages of that box: x = (picture x - 130) / 1230, y = (picture y - 10) / 520. */
     .welcome {
-        @apply relative mb-5 overflow-hidden rounded-2xl shadow-lift;
-        aspect-ratio: 16 / 9; max-height: 640px; background-color: #06173f;
-        background: #06173f url("../img/dashboard-art.jpg") 50% 31% / cover no-repeat;
+        @apply relative mb-5 flex items-center overflow-hidden rounded-2xl shadow-lift;
+        background: radial-gradient(ellipse 70% 120% at 18% 50%, #0b2560 0%, #06173f 60%, #041030 100%);
+    }
+    .welcome-text { @apply relative z-[1] min-w-0 flex-1 py-6 pl-9 pr-3; }
+    .welcome-name {
+        @apply m-0 font-brand font-bold leading-[1.12] tracking-wide;
+        font-size: clamp(26px, 3.1vw, 46px);
+        background: linear-gradient(100deg, #b67b12 0%, #f2b33d 20%, #fff0b8 32%, #f2b33d 44%, #c98a1c 70%, #ffe7a3 100%);
+        background-size: 220% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
+        filter: drop-shadow(0 2px 10px rgba(242,179,61,.28));
+        animation: fx-gold-text 6s ease-in-out infinite;
+    }
+    .welcome-rule { @apply my-3.5 flex items-center gap-2.5; max-width: 340px; }
+    .welcome-rule::before, .welcome-rule::after {
+        content: ""; @apply h-px flex-1; background: linear-gradient(90deg, transparent, theme("colors.gold.500"), transparent);
+    }
+    .welcome-rule i { @apply h-2 w-2 rotate-45 bg-gold-500; box-shadow: 0 0 8px rgba(242,179,61,.8); }
+    .welcome-tag { @apply m-0 font-brand text-[13px] font-semibold uppercase tracking-[.24em] text-[#e9d7a6]; }
+    .welcome-art {
+        @apply relative flex-none; width: 60%; aspect-ratio: 1230 / 520;
+        background: url("../img/dashboard-art.jpg") 42.48% 1.98% / 124.88% auto no-repeat;
+        -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 7%), linear-gradient(180deg, #000 90%, transparent 100%);
+        -webkit-mask-composite: source-in;
+        mask-image: linear-gradient(90deg, transparent 0, #000 7%), linear-gradient(180deg, #000 90%, transparent 100%);
+        mask-composite: intersect;
     }
     .welcome::after {
         content: ""; @apply absolute bottom-2.5 left-7 right-7 h-px opacity-60;
@@ -252,42 +274,6 @@
     .small { @apply text-sm; }
     .pos { @apply text-[#157347]; }
     .neg { @apply text-red-700; }
-
-    /* ---------------- login ---------------- */
-    .login-body {
-        @apply m-0 min-h-screen text-white;
-        background: radial-gradient(ellipse 75% 75% at 33% 48%, #0d1f52 0%, #0a1843 42%, #050d27 100%);
-    }
-    .login-stage {
-        @apply mx-auto grid min-h-screen max-w-[1500px] items-center gap-2;
-        grid-template-columns: minmax(0, 1fr) 420px; padding: 28px 64px 28px 16px;
-    }
-    .login-art { @apply flex items-center justify-center self-stretch; min-height: 420px; }
-    .login-card {
-        @apply relative rounded-2xl border border-gold-500/40 px-8 pb-7 pt-9;
-        background: linear-gradient(165deg, rgba(27,52,115,.62) 0%, rgba(9,22,58,.78) 100%);
-        box-shadow: 0 24px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.07);
-        -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
-    }
-    .login-card::before {
-        content: ""; @apply absolute -top-px left-6 right-6 h-0.5;
-        background: linear-gradient(90deg, transparent, theme("colors.gold.500"), transparent);
-    }
-    .login-head { @apply mb-6 text-center; }
-    .login-kicker { @apply text-xs font-bold uppercase tracking-[.18em] text-gold-500; }
-    .login-card h2 { @apply mb-1 mt-1.5 font-serif text-[28px] font-bold text-white; }
-    .login-head p { @apply m-0 text-[15px] text-[#c3cfe3]; }
-    .login-logo { @apply mx-auto mb-3 block h-[72px] w-[72px] rounded-xl bg-white object-contain p-1; }
-    .login-card label { @apply text-[15px] text-[#d3dcec]; }
-    .login-card input { @apply border-white/20 bg-[#040c24]/60 py-3 text-[17px] text-white; }
-    .login-card input:hover { @apply border-gold-500/50; }
-    .login-card input:focus { @apply border-gold-500 bg-[#040c24]/70 ring-gold-500/20; }
-    .login-card input:-webkit-autofill { -webkit-text-fill-color: #fff; -webkit-box-shadow: 0 0 0 40px #0b1942 inset; caret-color: #fff; }
-    .login-card .btn { @apply mt-2 text-[17px] font-bold; min-height: 54px; }
-    .login-card .alert.err { @apply border-red-400/40 bg-red-700/25 text-red-200; }
-    .login-card .alert.ok { @apply border-green-400/30 bg-green-700/25 text-green-200; }
-    .login-foot { @apply mt-5 flex items-center gap-2.5 whitespace-nowrap text-[11px] uppercase tracking-[.14em] text-[#d9b76a]; }
-    .login-foot .rule { @apply h-px flex-1; background: linear-gradient(90deg, transparent, rgba(242,179,61,.55), transparent); }
 
     .error-card { @apply p-8 text-center; }
 
@@ -466,11 +452,14 @@
 @media (max-width: 800px) {
     .grid-4, .grid-2, .bill-bottom, .split { grid-template-columns: 1fr; }
     .span-2 { grid-column: auto; }
-    .login-stage { grid-template-columns: 1fr; padding: 8px 16px 28px; gap: 0; align-content: start; }
-    .login-art { min-height: 0; }
-    .login-card { width: 100%; max-width: 440px; margin: -6px auto 0; padding: 26px 20px 22px; }
 }
 @media (max-width: 760px) { .dash-stats { grid-template-columns: 1fr; } }
+@media (max-width: 700px) {   /* phone: Lakshmi on top, the shop name below */
+    .welcome { flex-direction: column; }
+    .welcome-art { order: -1; width: 100%; -webkit-mask-image: none; mask-image: none; }
+    .welcome-text { padding: 4px 18px 22px; text-align: center; }
+    .welcome-rule { margin-left: auto; margin-right: auto; }
+}
 @media (max-width: 560px) {
     .sb .field-grid, .sb .totals-box { grid-template-columns: 1fr; }
     .sb .totals-box .field-row { border-right: 0; border-bottom: 1px solid theme("colors.line"); }

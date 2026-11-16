@@ -1,0 +1,19 @@
+[Unit]
+Description=Shop Billing (Shri Vijaylaxmi Textiles)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=shopbilling
+WorkingDirectory=/opt/shop-billing
+# Indian time for bill dates and the 8 PM Excel export. The app listens only inside the server; Caddy serves it over https.
+Environment=TZ=Asia/Kolkata
+ExecStart=/usr/bin/java -Xmx512m -Duser.timezone=Asia/Kolkata -jar /opt/shop-billing/shop-billing.jar \
+    --server.address=127.0.0.1 --server.port=8080 \
+    --server.forward-headers-strategy=native \
+    --server.servlet.session.cookie.secure=true
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

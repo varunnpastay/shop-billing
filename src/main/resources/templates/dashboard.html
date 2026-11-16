@@ -2,20 +2,30 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head th:replace="~{fragments :: head('Dashboard')}"></head>
 <body>
+<!-- straight after the peacock login: the dashboard appears from under the fading navy login screen -->
+<script>try { if (sessionStorage.getItem("svt-from-login")) { sessionStorage.removeItem("svt-from-login"); document.documentElement.classList.add("from-login"); } } catch (e) {}</script>
 <header th:replace="~{fragments :: nav}"></header>
 <main class="container dash-enter">
     <div th:replace="~{fragments :: flash}"></div>
-    <!-- banner: the shop artwork fills the box; flames, the halo behind Lakshmi, sparkles and petals are animated on top -->
-    <section class="welcome" role="img" th:aria-label="${shop.shopName}">
-        <div class="fx-halo" aria-hidden="true"><i></i></div>
-        <span class="fx-lamp" style="--x:16.8%;--y:20.4%" aria-hidden="true"></span>
-        <span class="fx-lamp" style="--x:83.3%;--y:20.4%" aria-hidden="true"></span>
-        <span class="fx-flame" style="--x:14.1%;--y:20.2%;--d:0s" aria-hidden="true"></span>
-        <span class="fx-flame" style="--x:16.8%;--y:19.4%;--d:.35s" aria-hidden="true"></span>
-        <span class="fx-flame" style="--x:19.5%;--y:20.2%;--d:.7s" aria-hidden="true"></span>
-        <span class="fx-flame" style="--x:80.7%;--y:20.2%;--d:.2s" aria-hidden="true"></span>
-        <span class="fx-flame" style="--x:83.3%;--y:19.4%;--d:.55s" aria-hidden="true"></span>
-        <span class="fx-flame" style="--x:86.0%;--y:20.2%;--d:.9s" aria-hidden="true"></span>
+    <!-- banner: shop name on the left; Lakshmi with the lamps on the right (animated: lamp flames, the halo behind
+         Lakshmi); sparkles and rose petals fall over the whole banner -->
+    <section class="welcome">
+        <div class="welcome-text">
+            <h1 class="welcome-name" th:text="${shop.shopName}">Shop</h1>
+            <div class="welcome-rule" aria-hidden="true"><i></i></div>
+            <p class="welcome-tag">Sarees &bull; Silks &bull; Wholesale Fabrics</p>
+        </div>
+        <div class="welcome-art" role="img" aria-label="Lakshmi">
+            <div class="fx-halo" aria-hidden="true"><i></i></div>
+            <span class="fx-lamp" style="--x:10.4%;--y:41.5%" aria-hidden="true"></span>
+            <span class="fx-lamp" style="--x:93.5%;--y:41.5%" aria-hidden="true"></span>
+            <span class="fx-flame" style="--x:7%;--y:41.3%;--d:0s" aria-hidden="true"></span>
+            <span class="fx-flame" style="--x:10.4%;--y:39.9%;--d:.35s" aria-hidden="true"></span>
+            <span class="fx-flame" style="--x:13.8%;--y:41.3%;--d:.7s" aria-hidden="true"></span>
+            <span class="fx-flame" style="--x:90.2%;--y:41.3%;--d:.2s" aria-hidden="true"></span>
+            <span class="fx-flame" style="--x:93.5%;--y:39.9%;--d:.55s" aria-hidden="true"></span>
+            <span class="fx-flame" style="--x:96.8%;--y:41.3%;--d:.9s" aria-hidden="true"></span>
+        </div>
         <div class="fx-shine" aria-hidden="true"></div>
         <div class="fx-layer" data-fx="sparkles" data-count="18" aria-hidden="true"></div>
         <div class="fx-layer" data-fx="petals" data-count="26" aria-hidden="true"></div>

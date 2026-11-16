@@ -4,6 +4,7 @@ import com.smme.billing.model.ShopLogo;
 import com.smme.billing.model.ShopSetting;
 import com.smme.billing.repository.ShopLogoRepository;
 import com.smme.billing.service.BackupService;
+import com.smme.billing.service.DataExportService;
 import com.smme.billing.service.LocalBillService;
 import com.smme.billing.service.SettingService;
 import jakarta.servlet.http.HttpSession;
@@ -28,13 +29,16 @@ public class SettingsController {
     private final ShopLogoRepository logoRepo;
     private final LocalBillService localBillService;
     private final BackupService backupService;
+    private final DataExportService exportService;
 
     public SettingsController(SettingService settingService, ShopLogoRepository logoRepo,
-                              LocalBillService localBillService, BackupService backupService) {
+                              LocalBillService localBillService, BackupService backupService,
+                              DataExportService exportService) {
         this.settingService = settingService;
         this.logoRepo = logoRepo;
         this.localBillService = localBillService;
         this.backupService = backupService;
+        this.exportService = exportService;
     }
 
     @GetMapping
@@ -44,6 +48,9 @@ public class SettingsController {
         model.addAttribute("backupSupported", backupService.isSupported());
         model.addAttribute("backups", backupService.list());
         model.addAttribute("backupDir", backupService.getDir().toString());
+        model.addAttribute("exportStatus", exportService.getLast());
+        model.addAttribute("exportDir", exportService.getDir().toString());
+        model.addAttribute("exportHasFile", java.nio.file.Files.isRegularFile(exportService.latestFile()));
         return "settings";
     }
 

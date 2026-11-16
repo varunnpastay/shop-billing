@@ -15,3 +15,12 @@ data_before_restore_*/
 
 # Tailwind build tools (the built css/app.css is committed)
 ui/node_modules/
+
+# design reference folder (not part of the app)
+svt-peacock/
+
+# daily Excel export (a separate PRIVATE data repository is cloned here)
+data-export/
+
+# copied jar when deploying (deploy/oracle/README.md)
+deploy/oracle/shop-billing.jar

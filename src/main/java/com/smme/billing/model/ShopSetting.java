@@ -69,6 +69,11 @@ public class ShopSetting {
     public Boolean getInvoiceConfigured() { return invoiceConfigured; }
     public void setInvoiceConfigured(Boolean invoiceConfigured) { this.invoiceConfigured = invoiceConfigured; }
 
+    /** PRIVATE GitHub repository the daily Excel export is pushed to (https://github.com/name/repo). */
+    private String exportGitUrl;
+    public String getExportGitUrl() { return exportGitUrl; }
+    public void setExportGitUrl(String exportGitUrl) { this.exportGitUrl = exportGitUrl; }
+
     private String username;
     private String passwordHash;
 

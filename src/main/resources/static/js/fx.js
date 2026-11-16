@@ -1,5 +1,4 @@
-/* Decorative animations for the dashboard and login page: falling rose petals, twinkling sparkles,
-   drifting peacock feathers and numbers that count up. Purely visual; nothing here changes any data.
+/* Decorative animations for the dashboard: falling rose petals, twinkling sparkles and numbers that count up. Purely visual; nothing here changes any data.
    Turned off when the computer asks for reduced motion. */
 (function () {
   "use strict";
@@ -31,38 +30,19 @@
     }
   }
 
-  // gold sparkles: twinkle in place (data-mode="twinkle") or rise slowly (data-mode="rise")
+  // gold sparkles that twinkle in place
   function sparkles(box) {
     const n = +box.dataset.count || 16;
-    const rise = box.dataset.mode === "rise";
     for (let i = 0; i < n; i++) {
       const s = document.createElement("span");
-      s.className = rise ? "spark rise" : "spark";
-      const dur = rise ? rand(9, 18) : rand(2.2, 4.5);
+      s.className = "spark";
+      const dur = rand(2.2, 4.5);
       s.style.setProperty("--x", rand(0, 100) + "%");
       s.style.setProperty("--y", rand(0, 100) + "%");
       s.style.setProperty("--dur", dur + "s");
       s.style.setProperty("--delay", -rand(0, dur) + "s");
-      s.style.setProperty("--size", rand(rise ? 2 : 3, rise ? 5 : 7) + "px");
+      s.style.setProperty("--size", rand(3, 7) + "px");
       box.appendChild(s);
-    }
-  }
-
-  // peacock feathers drifting slowly across the page
-  function feathers(box) {
-    const n = +box.dataset.count || 5;
-    for (let i = 0; i < n; i++) {
-      const f = document.createElement("img");
-      f.src = box.dataset.src;
-      f.alt = "";
-      f.className = "feather";
-      const dur = rand(22, 38);
-      f.style.setProperty("--x", rand(0, 95) + "%");
-      f.style.setProperty("--dur", dur + "s");
-      f.style.setProperty("--delay", -rand(0, dur) + "s");
-      f.style.setProperty("--size", rand(48, 92) + "px");
-      f.style.setProperty("--tilt", rand(-35, 35) + "deg");
-      box.appendChild(f);
     }
   }
 
@@ -87,7 +67,6 @@
     if (reduce) return;
     each('[data-fx="petals"]', petals);
     each('[data-fx="sparkles"]', sparkles);
-    each('[data-fx="feathers"]', feathers);
     each("[data-countup]", countUp);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
