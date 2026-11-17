@@ -261,6 +261,8 @@ Git runs through `ProcessBuilder` with `GIT_TERMINAL_PROMPT=0` and a 3-minute ti
   `y = (py − 10) / 520`.
 - **Moving extras:** rose petals and sparkles are created by `fx.js`. The money figures count up (`data-countup`).
   The pie charts draw themselves; they are SVG built from `PieChart` on the server, with no chart library.
+  Their colours are `PieChart.COLORS`, in the app's theme: navy `#1f4682`, gold `#e0a12a`, teal `#2a9d8f`,
+  maroon `#b0476b`, sky blue `#6f9fd8`, grey `#9aa5b8` (the sixth slice, usually "Other").
 - All effects stop under `prefers-reduced-motion`.
 
 ## 10. Styles (Tailwind)

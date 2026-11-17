@@ -280,6 +280,7 @@ The list shows expenses by date with totals. **Delete** removes one; the deletio
   - **Sales by category.**
   - **Expenses** by type.
 
+  The charts use the shop's colours: navy, gold, peacock teal, saree maroon, sky blue, and grey for "Other".
   Point at a slice to see its value.
 - **Low-stock alerts** and **Best sellers this month.**
 - **Recent Bills:** the 5 latest bills, each with **Print** and **Open**.

@@ -62,7 +62,7 @@ For the person who installs and looks after the app: setup, settings, backups, u
    name, the declaration, the footer, the Instagram ID, the **UPI ID** (for the QR code on receipts) and the **next
    local bill number**.
 7. **Settings → Shop Logo:** upload the logo (PNG, JPG, WEBP or GIF, under 1 MB). If none is uploaded, the built-in SVT
-   logo is used.
+   logo is used, and the preview there shows it (the gold SVT logo from the menu).
 8. **Items:** add the main items with purchase, selling and wholesale prices and opening stock.
 9. **Customers / Suppliers:** add the regular ones. Customers are also added automatically from bills.
 10. **Printers:** print one local and one wholesale bill to set the paper size and margins in the print window. The
@@ -162,8 +162,25 @@ If the zip doesn't contain a database, `restore.bat` puts the old data back and 
 
 1. Install Java (and git, for the GitHub backup) on the new computer.
 2. Copy the whole `shop-billing` folder. If the old computer still works, copying `data\` is the restore.
+   If you download the app from GitHub instead, follow [Installing from a GitHub download](#installing-from-a-github-download)
+   below: the download has no built app and no shop data.
 3. If the old computer is broken, restore `database/shop-billing-database.zip` from GitHub as in [section 7](#7-restoring-data).
 4. Start the app, check the latest bills, then run `autostart-on.bat` and set up the GitHub backup again.
+
+### Installing from a GitHub download
+
+The code on GitHub does **not** contain the built app (`target\shop-billing-1.0.0.jar`) or the shop's data
+(`data\`). Both are left out on purpose: the jar is rebuilt from the code, and the data must never be public.
+
+1. Install **Java 17+** (<https://adoptium.net>) and **Maven** (<https://maven.apache.org/download.cgi>: unzip it
+   and add its `bin` folder to the Windows `Path`).
+2. On GitHub: **Code → Download ZIP**, and unzip it, e.g. to `D:\shop-billing`.
+3. Open a Command Prompt in that folder and run `mvn -DskipTests package` once. It takes a few minutes the first
+   time and creates `target\shop-billing-1.0.0.jar`.
+4. **Bring the shop data:** copy the `data` folder from the old computer into the new folder, or restore
+   `database/shop-billing-database.zip` from the private data repository as in [section 7](#7-restoring-data).
+   Without this the app starts empty, with the login **admin / admin123**.
+5. Double-click `start.bat`, check the latest bills, then run `autostart-on.bat`.
 
 ## 9. Updating the app
 

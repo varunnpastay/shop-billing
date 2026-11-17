@@ -13,8 +13,14 @@ import java.util.Map;
  */
 public record PieChart(String title, String subtitle, BigDecimal total, List<Slice> slices) {
 
-    /** Colour-blind-safe categorical order (validated palette, light mode). */
-    public static final List<String> COLORS = List.of("#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#6250d6");
+    /** Shop colours: the app's navy and gold first, then peacock teal, saree maroon, sky blue and a soft grey. */
+    public static final List<String> COLORS = List.of(
+            "#1f4682",   // navy (the app colour)
+            "#e0a12a",   // gold
+            "#2a9d8f",   // peacock teal
+            "#b0476b",   // saree maroon
+            "#6f9fd8",   // sky blue
+            "#9aa5b8");  // soft grey (usually "Other")
     private static final double GAP = 0.6;   // surface gap between slices, in ring units (about 2px at 170px)
 
     /** One slice: dash = visible arc length, offset = where it starts on the ring. */

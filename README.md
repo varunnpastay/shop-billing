@@ -79,7 +79,9 @@ Created while running (never committed):
 
 ## Start
 
-1. **Build** (only when building from source): `mvn -DskipTests package`
+1. **Build** (needed after downloading from GitHub, which has no built app): `mvn -DskipTests package`.
+   A GitHub download also has no shop data: copy the `data` folder from the old computer, or restore the backup (see
+   [admin guide, section 8](docs/admin-guide.md#installing-from-a-github-download)).
 2. **Start:** double-click `start.bat`. It opens http://localhost:8080 in the browser after a few seconds. Keep the
    black window open while the shop is working.
 3. **Start automatically (optional):** double-click `autostart-on.bat` once. The app will then start by itself when
