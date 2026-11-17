@@ -7,7 +7,7 @@ no internet, except for the daily backup to GitHub.
 |---|---|---|
 | [User guide](user-guide.md) | Anyone billing at the shop | Logging in, local and wholesale bills, printing, customers, items and stock, purchases, payments, expenses, returns, reports, the dashboard |
 | [Admin guide](admin-guide.md) | The person who looks after the app | Installing, first-time setup, settings, backups and restore, the daily GitHub backup, starting automatically, updating, password reset, troubleshooting |
-| [Developer guide](developer-guide.md) | Anyone changing the code | How the app is built, folders, data model, business rules (GST, stock, payments, profit), the login animation, styles, configuration, web addresses, tests |
+| [Developer guide](developer-guide.md) | Anyone changing the code | How the app is built, folders, data model, business rules (GST, stock, payments, profit), the login animation, styles, configuration, web addresses, tests, working on another laptop |
 
 ## The app at a glance
 

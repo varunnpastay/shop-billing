@@ -19,6 +19,7 @@ code follows.
 12. [Web addresses (routes)](#12-web-addresses-routes)
 13. [Tests](#13-tests)
 14. [Conventions and gotchas](#14-conventions-and-gotchas)
+15. [Working on another laptop](#15-working-on-another-laptop)
 
 ---
 
@@ -336,3 +337,33 @@ The tests don't cover the WebGL animation or the git push. Check those by hand: 
 - **Activity log:** call `ActivityService.log(action, details)` for anything a shop owner would want to trace later.
 - **The `money` bean** in templates: `${@money.inr(x)}` gives `1,20,790.50`, `${@money.rs(x)}` the rupees part,
   `${@money.qty(x)}` a quantity without trailing zeros.
+
+## 15. Working on another laptop
+
+To change the code on a different laptop (for example with Claude Code) and then bring the changes to the shop PC.
+
+**Set up the laptop once:**
+
+1. Install **Java 17+** (<https://adoptium.net>), **Maven 3.8+**, **git** and **Node.js** (Node only for CSS changes).
+2. Get the code: `git clone https://github.com/varunnpastay/shop-billing.git` and `cd shop-billing`.
+   (Code → Download ZIP also works, but then you cannot push changes back.)
+3. Build and start: `mvn -DskipTests package`, then `start.bat` (or `java -jar target/shop-billing-1.0.0.jar`).
+   The app starts **empty** with the login **admin / admin123**: the shop's data is not on GitHub.
+4. To see real-looking data while testing, either copy the shop PC's `data` folder (a copy, never the only one),
+   or use the sample data that the tests load (`SampleDataLoader` in `src/test`).
+5. For CSS changes: `cd ui`, `npm install` once, then `npm run build` after each change to `ui/*.css`.
+
+**Make changes:**
+
+- Work on a branch, run `mvn test` (all tests must pass), then merge to `main` and `git push`.
+- `CLAUDE.md` in the project root lists the rules for Claude Code; it reads that file by itself.
+
+**Bring the changes to the shop PC:**
+
+1. On the shop PC, close the app (the black window). Take **Settings → Backup now** first.
+2. In the `shop-billing` folder: `git pull`, then `mvn -DskipTests package`.
+   (No git there? Download the ZIP and copy everything **except** `data\`, `backups\`, `data-export\` and
+   `db.properties` over the old folder, then build.)
+3. Start the app. The shop data in `data\` is kept, and new database columns are added automatically.
+
+Never copy the laptop's `data` folder onto the shop PC: it would replace the real bills.
